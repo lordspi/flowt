@@ -1,0 +1,418 @@
+'use client'
+
+import { motion, AnimatePresence } from 'framer-motion'
+import { useState, useEffect, useRef } from 'react'
+import { useRouter } from 'next/navigation'
+import { ArrowLeft, Settings, Send, Download, Share2, X, RefreshCw, Grid3x3, Upload } from 'lucide-react'
+
+export default function GeneratePage() {
+  const router = useRouter()
+  
+  const [messages, setMessages] = useState<any[]>([])
+  const [prompt, setPrompt] = useState('')
+  const [isGenerating, setIsGenerating] = useState(false)
+  const [showConfig, setShowConfig] = useState(false)
+  const [config, setConfig] = useState({ mode: 'Auto mode', resolution: '2K', ratio: '1:1', count: 15, credits: 198 })
+  const messagesEndRef = useRef<HTMLDivElement>(null)
+  const inputRef = useRef<HTMLTextAreaElement | null>(null)
+
+  // Read ?prompt= from URL on the client and trigger an initial generation once
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const params = new URLSearchParams(window.location.search)
+    const urlPrompt = params.get('prompt') || ''
+    if (urlPrompt) {
+      handleGenerate(urlPrompt)
+    }
+    // we intentionally run this only once on mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }
+
+  useEffect(scrollToBottom, [messages])
+
+  const handleGenerate = async (promptText: string = prompt) => {
+    if (!promptText.trim()) return
+
+    const imageSources = [
+      '/assets/flowt/generated-1.jpg',
+      '/assets/flowt/generated-2.jpg',
+      '/assets/flowt/generated-3.jpg',
+      '/assets/flowt/generated-4.jpg',
+    ]
+
+    const newMessage = {
+      id: Date.now(),
+      timestamp: new Date().toLocaleString('en-US', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false }),
+      prompt: promptText,
+      mode: 'Multi-image',
+      resolution: config.resolution,
+      ratio: config.ratio,
+      model: 'Flowt-2.0',
+      count: config.count,
+      status: 'generating',
+      images: []
+    }
+
+    setMessages(prev => [...prev, newMessage])
+    setPrompt('')
+    setIsGenerating(true)
+
+    // Simulated API call - replace with real API and keep this UI pattern
+    setTimeout(() => {
+      setMessages(prev =>
+        prev.map((msg) =>
+          msg.id === newMessage.id
+            ? {
+                ...msg,
+                status: 'complete',
+                images: Array.from({ length: newMessage.count }, (_, index) => {
+                  return imageSources[index % imageSources.length]
+                }),
+              }
+            : msg,
+        ),
+      )
+      setIsGenerating(false)
+      setConfig((prev) => ({ ...prev, credits: prev.credits - newMessage.count }))
+    }, 1200)
+  }
+
+  const handleReEdit = (promptText: string) => {
+    setPrompt(promptText)
+    scrollToBottom()
+    // focus after DOM update
+    setTimeout(() => {
+      inputRef.current?.focus()
+    }, 0)
+  }
+
+  return (
+    <div className="h-screen flex flex-col bg-[#F4F5F7]">
+      {/* HEADER */}
+      <header className="bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <button onClick={() => router.back()} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+            <ArrowLeft className="w-5 h-5" />
+          </button>
+          <div className="flex items-center gap-2">
+            <span className="font-semibold text-sm md:text-base">Flowt Ad Studio 2.0</span>
+            <span className="px-2 py-0.5 bg-gray-100 text-[11px] rounded">#250828</span>
+          </div>
+        </div>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => router.push('/gallery')}
+            className="flex items-center gap-2 px-3 py-2 hover:bg-gray-100 rounded-lg transition-colors text-sm"
+          >
+            <Grid3x3 className="w-4 h-4" />
+            <span className="hidden md:inline">Gallery</span>
+          </button>
+          <button
+            onClick={() => setShowConfig(true)}
+            className="flex items-center justify-center w-9 h-9 rounded-full border border-gray-200 hover:bg-gray-100 transition-colors"
+            aria-label="Open configuration"
+          >
+            <Settings className="w-5 h-5 text-gray-700" />
+          </button>
+          <div className="hidden md:inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-gradient-to-r from-purple-500 to-blue-500 text-white text-xs font-medium shadow-sm">
+            <span className="w-2 h-2 rounded-full bg-white/80" />
+            <span>Dashboard</span>
+          </div>
+        </div>
+      </header>
+
+      {/* MESSAGES AREA */}
+      <div className="flex-1 overflow-y-auto px-3 md:px-6 py-4">
+        <div className="max-w-5xl mx-auto space-y-6">
+        {messages.length === 0 ? (
+          <div className="h-full flex flex-col items-center justify-center text-gray-400 pt-10">
+            <div className="w-16 h-16 mb-4 opacity-50">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+            </div>
+            <p className="text-lg">Experience image generation. Let the creativity shake</p>
+          </div>
+        ) : (
+          messages.map((msg) => (
+            <motion.div
+              key={msg.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="space-y-3"
+            >
+              <div className="flex items-center gap-3 text-[11px] text-gray-500 pl-1">
+                <span>{msg.timestamp}</span>
+                <span className="px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-600">{msg.model}</span>
+              </div>
+
+              <div className="bg-white rounded-2xl p-4 md:p-5 shadow-sm border border-gray-100">
+                <p className="text-gray-900 text-sm md:text-base mb-3">{msg.prompt}</p>
+                <div className="flex flex-wrap gap-2 text-[11px]">
+                  <span className="px-2 py-1 bg-blue-50 text-blue-700 rounded">{msg.ratio}</span>
+                  <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded">{msg.resolution}</span>
+                  <span className="px-2 py-1 bg-purple-50 text-purple-700 rounded">{msg.mode}</span>
+                  <span className="px-2 py-1 bg-green-50 text-green-700 rounded">{msg.model}</span>
+                </div>
+              </div>
+
+              {msg.status === 'generating' ? (
+                <div className="bg-white rounded-2xl p-4 md:p-5 shadow-sm border border-gray-100">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+                    {Array.from({ length: msg.count || 0 }).map((_, i) => (
+                      <div
+                        key={i}
+                        className="relative aspect-square rounded-xl overflow-hidden bg-gray-100"
+                      >
+                        <div className="absolute inset-0 bg-gradient-to-r from-gray-100 via-gray-200 to-gray-100 animate-pulse" />
+                      </div>
+                    ))}
+                  </div>
+                  <div className="mt-4 flex items-center justify-between text-xs md:text-sm text-gray-500">
+                    <span>
+                      Generating {msg.count}{' '}
+                      {msg.count === 1 ? 'image' : 'images'}…
+                    </span>
+                    <span className="flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-purple-500 animate-pulse" />
+                      Using Flowt 2.0
+                    </span>
+                  </div>
+                </div>
+              ) : (
+                <div className="bg-white rounded-2xl p-4 md:p-5 shadow-sm border border-gray-100">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-4">
+                    {msg.images.map((img: string, idx: number) => (
+                      <div
+                        key={idx}
+                        className="relative group aspect-square rounded-xl overflow-hidden bg-gray-100"
+                      >
+                        <img src={img} alt={`Generated ${idx + 1}`} className="w-full h-full object-cover" onError={(e) => { e.currentTarget.src = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Crect fill='%23ddd' width='400' height='400'/%3E%3Ctext fill='%23999' font-family='Arial' font-size='20' x='50%25' y='50%25' text-anchor='middle' dy='.3em'%3EGenerated ${idx + 1}%3C/text%3E%3C/svg%3E` }} />
+                        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                          <button className="p-2 bg-white rounded-full hover:scale-110 transition-transform">
+                            <Download className="w-4 h-4" />
+                          </button>
+                          <button className="p-2 bg-white rounded-full hover:scale-110 transition-transform">
+                            <Share2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <button
+                    onClick={() => handleReEdit(msg.prompt)}
+                    className="flex items-center gap-2 px-4 py-2 text-xs md:text-sm text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
+                  >
+                    <RefreshCw className="w-4 h-4" />
+                    re-edit
+                  </button>
+                </div>
+              )}
+            </motion.div>
+          ))
+        )}
+        <div ref={messagesEndRef} />
+        </div>
+      </div>
+
+      {/* INPUT BAR - Fixed at bottom, compact floating chatbot */}
+      <div className="p-2.5 md:p-3">
+        <div className="max-w-4xl mx-auto">
+          <div className="bg-white rounded-3xl shadow-2xl px-3.5 md:px-5 py-3.5 md:py-4 border border-gray-100 scale-[0.7] md:scale-[0.75] origin-bottom">
+            <div className="flex gap-3 md:gap-4 items-start">
+              <button className="flex-shrink-0 w-11 h-11 md:w-12 md:h-12 rounded-2xl border border-dashed border-gray-300 bg-gray-50 flex items-center justify-center text-gray-400 hover:border-purple-300 hover:bg-purple-50 transition-colors">
+                <Upload className="w-5 h-5" />
+              </button>
+              <div className="flex-1 flex flex-col gap-2">
+                <div className="flex flex-wrap items-center gap-2 text-sm md:text-base">
+                  <span className="text-blue-600 font-medium">Auto Group Mode</span>
+                  <span className="text-gray-400">Describe the image you want to generate</span>
+                </div>
+                <div className="relative">
+                  <textarea
+                    value={prompt}
+                    onChange={(e) => setPrompt(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault()
+                        handleGenerate()
+                      }
+                    }}
+                    ref={inputRef}
+                    className="w-full h-16 md:h-20 px-0 pr-2 pb-1 pt-1 border-none outline-none focus:outline-none focus-visible:outline-none focus:ring-0 focus:border-transparent resize-none text-sm md:text-base text-gray-800 placeholder:text-gray-400 bg-transparent"
+                    placeholder="Write a detailed description, e.g. product photo, lighting, background..."
+                    disabled={isGenerating}
+                  />
+                </div>
+              </div>
+            </div>
+            <div className="mt-2.5 flex flex-wrap gap-2 md:gap-3 items-center text-xs md:text-sm">
+              <div className="px-3 py-1.5 border border-gray-200 rounded-xl bg-gray-50 text-xs md:text-sm text-gray-700 flex items-center gap-2 select-none">
+                <span className="text-[10px] md:text-xs px-2 py-0.5 rounded-full bg-gray-200 text-gray-700">Auto</span>
+                <span>group image</span>
+              </div>
+              <button
+                onClick={() => setShowConfig(true)}
+                className="px-3 py-1.5 border border-gray-200 rounded-xl text-xs md:text-sm text-gray-800 hover:border-purple-300 hover:bg-purple-50 transition-colors"
+              >
+                {config.resolution}
+              </button>
+              <button
+                onClick={() => setShowConfig(true)}
+                className="px-3 py-1.5 border border-gray-200 rounded-xl text-xs md:text-sm text-gray-800 hover:border-purple-300 hover:bg-purple-50 transition-colors"
+              >
+                {config.ratio}
+              </button>
+              <button
+                onClick={() => setShowConfig(true)}
+                className="px-3 py-1.5 border border-gray-200 rounded-xl text-xs md:text-sm text-gray-800 hover:border-purple-300 hover:bg-purple-50 transition-colors"
+              >
+                {config.count} {config.count === 1 ? 'image' : 'images'}
+              </button>
+              <button
+                onClick={() => handleGenerate()}
+                disabled={!prompt.trim() || isGenerating}
+                className="ml-auto w-8 h-8 md:w-9 md:h-9 rounded-full bg-purple-500 text-white flex items-center justify-center shadow-md hover:bg-purple-600 hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <svg
+                  className="w-4 h-4 md:w-5 md:h-5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M5 10l7-7m0 0l7 7m-7-7v18"
+                  />
+                </svg>
+              </button>
+            </div>
+          </div>
+          <div className="mt-3 text-xs text-center text-gray-500">
+            Flowt Ad Studio 2.0 is your AI ad creative partner generate scroll-stopping campaigns in seconds and iterate faster than ever.
+          </div>
+        </div>
+      </div>
+
+      {/* CONFIG PANEL - same controls as landing page, labelled Dashboard */}
+      <AnimatePresence>
+        {showConfig && (
+          <>
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowConfig(false)} className="fixed inset-0 bg-black/20 z-50" />
+            <motion.div initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} transition={{ type: 'spring', damping: 25, stiffness: 200 }} className="fixed right-0 top-0 h-full w-96 bg-white shadow-2xl z-50 overflow-y-auto">
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center gap-2">
+                    <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-purple-50 text-purple-600">
+                      <Settings className="w-4 h-4" />
+                    </span>
+                    <h2 className="text-xl font-semibold">Configuration</h2>
+                  </div>
+                  <button onClick={() => setShowConfig(false)} className="p-2 hover:bg-gray-100 rounded-full">
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+                <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+                  <span className="text-sm text-gray-600">Usage remaining: </span>
+                  <span className="text-3xl font-bold text-purple-600">{config.credits}</span>
+                  <span className="text-gray-600">/200</span>
+                  <span className="text-sm text-gray-500 ml-1">images</span>
+                </div>
+
+                {/* Resolution */}
+                <div className="mb-5">
+                  <div className="mb-2 text-xs font-medium text-gray-500">Resolution</div>
+                  <div className="inline-flex gap-2 rounded-xl bg-gray-50 p-1">
+                    {['2K', '4K'].map((res) => (
+                      <button
+                        key={res}
+                        onClick={() => setConfig({ ...config, resolution: res })}
+                        className={`px-4 py-1.5 text-xs rounded-lg border transition-all ${
+                          config.resolution === res
+                            ? 'border-purple-500 bg-white text-purple-600 shadow-sm'
+                            : 'border-transparent text-gray-600 hover:bg-white'
+                        }`}
+                      >
+                        {res}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Aspect ratio */}
+                <div className="mb-5">
+                  <div className="mb-2 text-xs font-medium text-gray-500">Aspect ratio</div>
+                  <div className="grid grid-cols-4 gap-2">
+                    {['1:1', '3:4', '4:3', '16:9', '9:16', '2:3', '3:2', '21:9'].map((ratio) => (
+                      <button
+                        key={ratio}
+                        onClick={() => setConfig({ ...config, ratio })}
+                        className={`py-1.5 text-xs rounded-lg border transition-all ${
+                          config.ratio === ratio
+                            ? 'border-purple-500 bg-white text-purple-600 shadow-sm'
+                            : 'border-gray-200 text-gray-600 hover:border-purple-200'
+                        }`}
+                      >
+                        {ratio}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                {/* Maximum images per generation */}
+                <div className="mb-5">
+                  <div className="mb-2 text-xs font-medium text-gray-500">
+                    Maximum images to generate per request
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="range"
+                      min="1"
+                      max="15"
+                      value={config.count}
+                      onChange={(e) =>
+                        setConfig({ ...config, count: parseInt(e.target.value) })
+                      }
+                      className="flex-1"
+                    />
+                    <input
+                      type="number"
+                      value={config.count}
+                      onChange={(e) =>
+                        setConfig({ ...config, count: parseInt(e.target.value) })
+                      }
+                      className="w-16 px-2 py-1 border rounded text-center text-xs"
+                    />
+                  </div>
+                </div>
+
+                {/* Image size */}
+                <div className="mb-2 text-xs font-medium text-gray-500">Image size</div>
+                <div className="flex items-center gap-2 text-xs text-gray-600 mb-6">
+                  <span>W</span>
+                  <input
+                    type="number"
+                    defaultValue="2048"
+                    className="flex-1 px-2 py-1 border rounded"
+                  />
+                  <span className="text-gray-400">⇄</span>
+                  <span>H</span>
+                  <input
+                    type="number"
+                    defaultValue="2048"
+                    className="flex-1 px-2 py-1 border rounded"
+                  />
+                </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+    </div>
+  )
+}
