@@ -1,0 +1,193 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum PlanTier {
+  FREE
+  BASIC
+  ENHANCED
+  PREMIUM
+  DEDICATED
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  CANCELED
+  PAST_DUE
+  INCOMPLETE
+}
+
+enum Provider {
+  STRIPE
+  RAZORPAY
+}
+
+model User {
+  id              String   @id @default(cuid())
+  email           String   @unique
+  name            String?
+  image           String?
+  oauthProvider   String?
+  oauthProviderId String?
+  role            String   @default("user")
+  currentPlan     PlanTier @default(FREE)
+  creditsBalance  Int      @default(0)
+  organizationId  String?
+  organization    Organization? @relation(fields: [organizationId], references: [id])
+  subscriptions   Subscription[]
+  accounts        Account[]
+  sessions        Session[]
+  generations     ImageGeneration[]
+  transactions    Transaction[]
+  auditLogs       AuditLog[]
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model Organization {
+  id               String   @id @default(cuid())
+  name             String
+  billingEmail     String
+  plan             PlanTier @default(DEDICATED)
+  creditsBalance   Int      @default(0)
+  slaTier          String?
+  hasAccountManager Boolean @default(false)
+  notes            String?
+  users            User[]
+  subscriptions    Subscription[]
+  transactions     Transaction[]
+  auditLogs        AuditLog[]
+  apiKeys          ApiKey[]
+  generations      ImageGeneration[]
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+model Subscription {
+  id                     String             @id @default(cuid())
+  userId                 String?
+  user                   User?              @relation(fields: [userId], references: [id])
+  organizationId         String?
+  organization           Organization?      @relation(fields: [organizationId], references: [id])
+  plan                   PlanTier
+  provider               Provider
+  providerCustomerId     String
+  providerSubscriptionId String
+  status                 SubscriptionStatus
+  currentPeriodStart     DateTime
+  currentPeriodEnd       DateTime
+  cancelAtPeriodEnd      Boolean            @default(false)
+  createdAt              DateTime           @default(now())
+  updatedAt              DateTime           @updatedAt
+}
+
+model Transaction {
+  id               String        @id @default(cuid())
+  userId           String?
+  user             User?         @relation(fields: [userId], references: [id])
+  organizationId   String?
+  organization     Organization? @relation(fields: [organizationId], references: [id])
+  type             String
+  plan             PlanTier?
+  credits          Int           @default(0)
+  amount           Int           @default(0)
+  currency         String        @default("usd")
+  provider         Provider
+  providerPaymentId String?
+  providerInvoiceId String?
+  metadata         Json?
+  createdAt        DateTime      @default(now())
+}
+
+model ImageGeneration {
+  id                 String           @id @default(cuid())
+  userId             String
+  user               User             @relation(fields: [userId], references: [id])
+  organizationId     String?
+  organization       Organization?    @relation(fields: [organizationId], references: [id])
+  prompt             String
+  configMode         String
+  configResolution   String
+  configRatio        String
+  count              Int
+  status             String
+  creditsCharged     Int
+  seedreamRequestId  String?
+  images             GeneratedImage[]
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+}
+
+model GeneratedImage {
+  id            String          @id @default(cuid())
+  generationId  String
+  generation    ImageGeneration @relation(fields: [generationId], references: [id])
+  url           String
+  width         Int?
+  height        Int?
+  format        String?
+  metadata      Json?
+  createdAt     DateTime        @default(now())
+}
+
+model AuditLog {
+  id             String        @id @default(cuid())
+  userId         String?
+  user           User?         @relation(fields: [userId], references: [id])
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id])
+  action         String
+  ip             String?
+  userAgent      String?
+  details        Json?
+  createdAt      DateTime      @default(now())
+}
+
+model ApiKey {
+  id             String        @id @default(cuid())
+  organizationId String
+  organization   Organization  @relation(fields: [organizationId], references: [id])
+  tokenHash      String        @unique
+  label          String?
+  lastUsedAt     DateTime?
+  createdAt      DateTime      @default(now())
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expires      DateTime
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}

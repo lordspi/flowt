@@ -1,0 +1,113 @@
+========================================
+FLOWT AI - IMAGE UPLOAD GUIDE
+========================================
+
+This file lists all images you need to upload for your website.
+Place each image in the exact folder with the exact filename.
+
+========================================
+CAROUSEL SECTION (Homepage 3D Carousel)
+========================================
+Folder: /public/assets/flowt/
+
+Images needed:
+- carousel-comics.jpg
+- carousel-commercial.jpg
+- carousel-poster.jpg
+- carousel-blindbox.jpg
+
+========================================
+GENERATED SAMPLES (Gallery Page)
+========================================
+Folder: /public/assets/flowt/
+
+Images needed:
+- generated-1.jpg
+- generated-2.jpg
+- generated-3.jpg
+- generated-4.jpg
+
+========================================
+COMMERCIAL PHOTOGRAPHY SECTION
+========================================
+Folder: /public/assets/marketing/
+
+Images needed:
+- commercial-thumb-1.jpg
+- commercial-thumb-2.jpg
+- commercial-thumb-3.jpg
+- commercial-main.jpg
+
+========================================
+BRAND VOICE SECTION
+========================================
+Folder: /public/assets/marketing/
+
+Images needed:
+- brand-thumb-1.jpg
+- brand-thumb-2.jpg
+- brand-thumb-3.jpg
+- brand-main.jpg
+
+========================================
+POSTER SECTION
+========================================
+Folder: /public/assets/marketing/
+
+Images needed:
+- poster-main.jpg
+- poster-slide-1.jpg
+- poster-slide-2.jpg
+- poster-slide-3.jpg
+
+========================================
+CAPABILITIES SECTION
+========================================
+Folder: /public/assets/marketing/
+
+Images needed:
+- capability-multi-input.jpg
+- capability-multi-output.jpg
+- capability-batch-input.jpg
+- capability-batch-output-1.jpg
+- capability-batch-output-2.jpg
+- capability-batch-output-3.jpg
+- capability-batch-output-4.jpg
+- capability-style-input.jpg
+- capability-style-output.jpg
+- capability-bg-input.jpg
+- capability-bg-output.jpg
+- capability-color-input.jpg
+- capability-color-output.jpg
+
+========================================
+COMPANIES SECTION
+========================================
+Folder: /public/assets/logos/
+
+Images needed:
+- logo1.png
+- logo2.png
+- logo3.png
+- logo4.png
+- logo5.png
+- logo6.png
+- logo7.png
+- logo8.png
+- logo9.png
+- logo10.png
+
+========================================
+TOTAL IMAGES NEEDED: 39
+========================================
+
+QUICK CHECKLIST:
+□ All carousel images in /public/assets/flowt/
+□ All generated samples in /public/assets/flowt/
+□ All commercial images in /public/assets/marketing/
+□ All brand images in /public/assets/marketing/
+□ All poster images in /public/assets/marketing/
+□ All capability images in /public/assets/marketing/
+□ All company logos in /public/assets/logos/
+
+IMPORTANT: Use exact filenames and folders as listed above!

@@ -12,12 +12,50 @@ export default function GeneratePage() {
   const [prompt, setPrompt] = useState('')
   const [isGenerating, setIsGenerating] = useState(false)
   const [showConfig, setShowConfig] = useState(false)
-  const [config, setConfig] = useState({ mode: 'Auto mode', resolution: '2K', ratio: '1:1', count: 15, credits: 198 })
+  const [config, setConfig] = useState({ mode: 'Auto mode', resolution: '2K', ratio: '1:1', count: 15, credits: 0 })
+  const [isLoadingUser, setIsLoadingUser] = useState(true)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement | null>(null)
 
-  // Read ?prompt= from URL on the client and trigger an initial generation once
+  // Load current user and credits; if unauthorized, show demo mode
   useEffect(() => {
+    let cancelled = false
+
+    const loadUser = async () => {
+      try {
+        const res = await fetch('/api/user/me')
+        if (res.status === 401) {
+          // Set demo credits instead of redirecting
+          setConfig((prev) => ({ ...prev, credits: 15 }))
+          return
+        }
+        if (!res.ok) {
+          // Set demo credits on error
+          setConfig((prev) => ({ ...prev, credits: 15 }))
+          return
+        }
+        const user = await res.json()
+        if (!cancelled && typeof user.creditsBalance === 'number') {
+          setConfig((prev) => ({ ...prev, credits: user.creditsBalance }))
+        }
+      } catch (error) {
+        // Set demo credits on error
+        if (!cancelled) setConfig((prev) => ({ ...prev, credits: 15 }))
+      } finally {
+        if (!cancelled) setIsLoadingUser(false)
+      }
+    }
+
+    loadUser()
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  // Read ?prompt= from URL on the client and trigger an initial generation once, after auth check
+  useEffect(() => {
+    if (isLoadingUser) return
     if (typeof window === 'undefined') return
     const params = new URLSearchParams(window.location.search)
     const urlPrompt = params.get('prompt') || ''
@@ -26,7 +64,7 @@ export default function GeneratePage() {
     }
     // we intentionally run this only once on mount
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [isLoadingUser])
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -37,16 +75,15 @@ export default function GeneratePage() {
   const handleGenerate = async (promptText: string = prompt) => {
     if (!promptText.trim()) return
 
-    const imageSources = [
-      '/assets/flowt/generated-1.jpg',
-      '/assets/flowt/generated-2.jpg',
-      '/assets/flowt/generated-3.jpg',
-      '/assets/flowt/generated-4.jpg',
-    ]
-
     const newMessage = {
       id: Date.now(),
-      timestamp: new Date().toLocaleString('en-US', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false }),
+      timestamp: new Date().toLocaleString('en-US', {
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+      }),
       prompt: promptText,
       mode: 'Multi-image',
       resolution: config.resolution,
@@ -54,31 +91,62 @@ export default function GeneratePage() {
       model: 'Flowt-2.0',
       count: config.count,
       status: 'generating',
-      images: []
+      images: [],
     }
 
-    setMessages(prev => [...prev, newMessage])
+    setMessages((prev) => [...prev, newMessage])
     setPrompt('')
     setIsGenerating(true)
 
-    // Simulated API call - replace with real API and keep this UI pattern
-    setTimeout(() => {
-      setMessages(prev =>
+    try {
+      const response = await fetch('/api/generate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          prompt: promptText,
+          config,
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to generate images')
+      }
+
+      const data = await response.json()
+
+      setMessages((prev) =>
         prev.map((msg) =>
           msg.id === newMessage.id
             ? {
                 ...msg,
-                status: 'complete',
-                images: Array.from({ length: newMessage.count }, (_, index) => {
-                  return imageSources[index % imageSources.length]
-                }),
+                status: data.status ?? 'complete',
+                count: data.config?.count ?? newMessage.count,
+                images: Array.isArray(data.images) ? data.images : [],
               }
             : msg,
         ),
       )
+      if (typeof data.remainingCredits === 'number') {
+        setConfig((prev) => ({ ...prev, credits: data.remainingCredits }))
+      } else {
+        setConfig((prev) => ({ ...prev, credits: Math.max(0, prev.credits - (data.config?.count ?? newMessage.count)) }))
+      }
+    } catch (error) {
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === newMessage.id
+            ? {
+                ...msg,
+                status: 'error',
+              }
+            : msg,
+        ),
+      )
+    } finally {
       setIsGenerating(false)
-      setConfig((prev) => ({ ...prev, credits: prev.credits - newMessage.count }))
-    }, 1200)
+    }
   }
 
   const handleReEdit = (promptText: string) => {
@@ -100,10 +168,13 @@ export default function GeneratePage() {
           </button>
           <div className="flex items-center gap-2">
             <span className="font-semibold text-sm md:text-base">Flowt Ad Studio 2.0</span>
-            <span className="px-2 py-0.5 bg-gray-100 text-[11px] rounded">#250828</span>
           </div>
         </div>
         <div className="flex items-center gap-3">
+          <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-100 text-xs text-gray-700">
+            <span className="w-2 h-2 rounded-full bg-green-500" />
+            <span>{config.credits} credits left</span>
+          </div>
           <button
             onClick={() => router.push('/gallery')}
             className="flex items-center gap-2 px-3 py-2 hover:bg-gray-100 rounded-lg transition-colors text-sm"
@@ -319,11 +390,10 @@ export default function GeneratePage() {
                   </button>
                 </div>
                 <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-                  <span className="text-sm text-gray-600">Usage remaining: </span>
-                  <span className="text-3xl font-bold text-purple-600">{config.credits}</span>
-                  <span className="text-gray-600">/200</span>
-                  <span className="text-sm text-gray-500 ml-1">images</span>
-                </div>
+                <span className="text-sm text-gray-600">Remaining credits: </span>
+                <span className="text-3xl font-bold text-purple-600">{config.credits}</span>
+                <span className="text-sm text-gray-500 ml-2">images this period</span>
+              </div>
 
                 {/* Resolution */}
                 <div className="mb-5">
