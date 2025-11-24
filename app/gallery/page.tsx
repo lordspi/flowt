@@ -18,14 +18,8 @@ export default function GalleryPage() {
     setMounted(true)
   }, [])
 
-  // Sample gallery items - REPLACE WITH YOUR DATA
-  const galleryItems = [
-    { id: 1, prompt: 'A beautiful sunset over the ocean with dolphins jumping', image: '/assets/flowt/generated-1.jpg', timestamp: '11-15 23:24', model: 'Flowt-2.0' },
-    { id: 2, prompt: 'Generate a cinematic ad out of this image', image: '/assets/flowt/generated-2.jpg', timestamp: '11-13 05:41', model: 'Flowt-2.0' },
-    { id: 3, prompt: 'Comic book style superhero character', image: '/assets/flowt/carousel-comics.jpg', timestamp: '11-11 14:35', model: 'Flowt-2.0' },
-    { id: 4, prompt: 'Product photography of luxury handbag', image: '/assets/flowt/carousel-commercial.jpg', timestamp: '11-10 09:15', model: 'Flowt-2.0' },
-    { id: 5, prompt: 'Artistic poster design with bold typography', image: '/assets/flowt/carousel-poster.jpg', timestamp: '11-09 16:42', model: 'Flowt-2.0' },
-  ]
+  // User-focused gallery items - empty for now, will be populated by user generations
+  const galleryItems: any[] = []
 
   if (!mounted) {
     return null
@@ -210,7 +204,14 @@ export default function GalleryPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
             </div>
-            <p className="text-gray-500">No generations yet. Start creating!</p>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Your gallery is empty</h3>
+            <p className="text-gray-500 mb-6">Start creating amazing images with Flowt 2.0!</p>
+            <button
+              onClick={() => router.push('/generate')}
+              className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 text-white rounded-full font-medium hover:shadow-lg transition-all"
+            >
+              Create Your First Image
+            </button>
           </div>
         )}
       </div>
