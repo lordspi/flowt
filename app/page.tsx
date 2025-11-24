@@ -147,9 +147,12 @@ const beforeAfterSets = [
 ]
 
 export default function Home() {
+  const heroRef = useRef<HTMLDivElement>(null)
   const capabilityRef = useRef<HTMLDivElement>(null)
+  const pricingRef = useRef<HTMLDivElement>(null)
   const [currentIndex, setCurrentIndex] = useState(2)
   const [hoveredCard, setHoveredCard] = useState<number | null>(null)
+  const [activeSection, setActiveSection] = useState('hero')
   const [prompt, setPrompt] = useState('')
   const [showConfig, setShowConfig] = useState(false)
   const [posterSlideIndex, setPosterSlideIndex] = useState(0)
@@ -164,7 +167,6 @@ export default function Home() {
   })
   const [activeCapability, setActiveCapability] = useState(capabilityTabs[0].id)
   const [showPricingNudge, setShowPricingNudge] = useState(false)
-  const pricingRef = useRef<HTMLDivElement | null>(null)
   const router = useRouter()
   const activeCapabilityContent = capabilityTabs.find((cap) => cap.id === activeCapability) ?? capabilityTabs[0]
 
@@ -322,6 +324,50 @@ export default function Home() {
     }
   }
 
+  // Scroll navigation functions
+  const handleGoHero = () => {
+    if (heroRef.current) {
+      heroRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+  }
+
+  const handleGoCapability = () => {
+    if (capabilityRef.current) {
+      capabilityRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+  }
+
+  const handleGoPricing = () => {
+    if (pricingRef.current) {
+      pricingRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+  }
+
+  // Scroll detection to update active section
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollPosition = window.scrollY + 100
+
+      if (heroRef.current && scrollPosition < heroRef.current.offsetTop + heroRef.current.offsetHeight) {
+        setActiveSection('hero')
+      } else if (capabilityRef.current && scrollPosition < capabilityRef.current.offsetTop + capabilityRef.current.offsetHeight) {
+        setActiveSection('capability')
+      } else if (pricingRef.current) {
+        setActiveSection('pricing')
+      }
+    }
+
+    window.addEventListener('scroll', handleScroll)
+    handleScroll() // Initial check
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
+
+  const sections = [
+    { id: 'hero', label: 'Home', ref: heroRef, handler: handleGoHero },
+    { id: 'capability', label: 'Features', ref: capabilityRef, handler: handleGoCapability },
+    { id: 'pricing', label: 'Pricing', ref: pricingRef, handler: handleGoPricing },
+  ]
+
   return (
     <>
       {/* HEADER */}
@@ -359,8 +405,28 @@ export default function Home() {
 
       {/* MAIN CONTENT BACKGROUND */}
       <div
-        className="pt-24 pb-12 min-h-screen bg-white"
+        ref={heroRef}
+        className="pt-24 pb-12 min-h-screen bg-white relative"
       >
+        {/* Scroll Indicators */}
+        <div className="fixed right-6 top-1/2 -translate-y-1/2 z-40 flex flex-col gap-3">
+          {sections.map((section) => (
+            <button
+              key={section.id}
+              onClick={section.handler}
+              className={`group relative w-3 h-3 rounded-full transition-all duration-300 ${
+                activeSection === section.id
+                  ? 'bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 scale-125'
+                  : 'bg-gray-300 hover:bg-gray-400'
+              }`}
+              aria-label={section.label}
+            >
+              <div className="absolute right-full mr-3 top-1/2 -translate-y-1/2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                {section.label}
+              </div>
+            </button>
+          ))}
+        </div>
         {/* HERO + CAROUSEL + CHATBOT (kept inside scaled container) */}
         <div
           className="relative origin-top mx-auto"
