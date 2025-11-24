@@ -1,7 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { auth } from '@/lib/auth'
-import { prisma } from '@/lib/db'
-import { generateWithSeedream, SeedreamConfig } from '@/lib/seedream'
 
 interface GenerateConfig {
   mode: string
@@ -54,40 +51,7 @@ function validateBody(body: unknown): GenerateRequestBody {
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await auth()
-
-    // Allow demo mode without authentication
-    if (!session?.user?.id) {
-      // Return demo response without database operations
-      const raw = await request.json()
-      const { prompt, config } = validateBody(raw)
-      
-      // Return demo images
-      const demoImages = [
-        `https://picsum.photos/seed/${prompt.replace(/\s+/g, '-')}-1/512/512.jpg`,
-        `https://picsum.photos/seed/${prompt.replace(/\s+/g, '-')}-2/512/512.jpg`,
-        `https://picsum.photos/seed/${prompt.replace(/\s+/g, '-')}-3/512/512.jpg`,
-      ].slice(0, config.count)
-
-      return NextResponse.json(
-        {
-          id: `demo-${Date.now()}`,
-          prompt,
-          config,
-          status: 'complete',
-          images: demoImages.map((url, index) => ({
-            url,
-            width: 512,
-            height: 512,
-            format: 'jpg',
-          })),
-          remainingCredits: Math.max(0, 15 - config.count),
-        },
-        { status: 200 },
-      )
-    }
-
-    // For authenticated users, also return demo mode for now
+    // Demo mode - no auth required
     const raw = await request.json()
     const { prompt, config } = validateBody(raw)
     
