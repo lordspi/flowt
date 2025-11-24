@@ -2,7 +2,8 @@ import NextAuth, { DefaultSession } from 'next-auth'
 import Google from 'next-auth/providers/google'
 import { PrismaAdapter } from '@auth/prisma-adapter'
 import { prisma } from './db'
-import type { NextAuthConfig, Session, JWT } from 'next-auth'
+import type { NextAuthConfig, Session } from 'next-auth'
+import { JWT } from 'next-auth/jwt'
 
 declare module 'next-auth' {
   interface Session {
