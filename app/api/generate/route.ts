@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
     if (process.env.SEEDREAM_API_KEY && process.env.SEEDREAM_API_ENDPOINT) {
       try {
         // Use real AI generation
-        const seedreamResult = await generateWithSeedream(prompt, config as SeeddreamConfig)
+        const seedreamResult = await generateWithSeedream(prompt, config as GenerateConfig)
         
         return NextResponse.json(
           {
