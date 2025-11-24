@@ -310,12 +310,6 @@ export default function Home() {
     }
   }
 
-  const handleGoCapability = () => {
-    if (capabilityRef.current) {
-      capabilityRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    }
-  }
-
   const handleGoDashboard = () => {
     if (prompt.trim()) {
       router.push(`/generate?prompt=${encodeURIComponent(prompt)}`)
