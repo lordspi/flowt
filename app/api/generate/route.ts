@@ -87,83 +87,30 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // For authenticated users, also return demo mode for now
     const raw = await request.json()
     const { prompt, config } = validateBody(raw)
-    const userId = session.user.id
-
-    // Load the user to check credits and organization context
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: {
-        id: true,
-        creditsBalance: true,
-        organizationId: true,
-      },
-    })
-
-    if (!user) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 })
-    }
-
-    const creditsRequired = config.count
-
-    if (user.creditsBalance < creditsRequired) {
-      return NextResponse.json(
-        {
-          error: 'Not enough credits. Please upgrade your plan or top up.',
-        },
-        { status: 402 },
-      )
-    }
-
-    // Call Seedream 4.0 using the shared helper. This will throw if env is not configured.
-    const seedreamResult = await generateWithSeedream(prompt, config as SeedreamConfig)
-
-    // Persist generation + images and deduct credits in a single transaction.
-    const [updatedUser, generation] = await prisma.$transaction([
-      prisma.user.update({
-        where: { id: user.id },
-        data: {
-          creditsBalance: {
-            decrement: creditsRequired,
-          },
-        },
-      }),
-      prisma.imageGeneration.create({
-        data: {
-          userId: user.id,
-          organizationId: user.organizationId,
-          prompt,
-          configMode: config.mode,
-          configResolution: config.resolution,
-          configRatio: config.ratio,
-          count: config.count,
-          status: 'complete',
-          creditsCharged: creditsRequired,
-          seedreamRequestId: null,
-          images: {
-            create: seedreamResult.images.map((img) => ({
-              url: img.url,
-              width: img.width ?? null,
-              height: img.height ?? null,
-              format: img.format ?? null,
-            })),
-          },
-        },
-        include: {
-          images: true,
-        },
-      }),
-    ])
+    
+    // Return demo images
+    const demoImages = [
+      `https://picsum.photos/seed/${prompt.replace(/\s+/g, '-')}-1/512/512.jpg`,
+      `https://picsum.photos/seed/${prompt.replace(/\s+/g, '-')}-2/512/512.jpg`,
+      `https://picsum.photos/seed/${prompt.replace(/\s+/g, '-')}-3/512/512.jpg`,
+    ].slice(0, config.count)
 
     return NextResponse.json(
       {
-        id: generation.id,
-        prompt: generation.prompt,
+        id: `demo-${Date.now()}`,
+        prompt,
         config,
-        status: generation.status,
-        images: seedreamResult.images,
-        remainingCredits: updatedUser.creditsBalance,
+        status: 'complete',
+        images: demoImages.map((url, index) => ({
+          url,
+          width: 512,
+          height: 512,
+          format: 'jpg',
+        })),
+        remainingCredits: Math.max(0, 15 - config.count),
       },
       { status: 200 },
     )
