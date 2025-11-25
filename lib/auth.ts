@@ -13,7 +13,7 @@ if (process.env.DATABASE_URL) {
     PrismaAdapter = adapterModule
     prisma = require('./db').prisma
   } catch (error) {
-    console.warn('Database adapter not available, falling back to JWT strategy')
+    console.warn('Database adapter not available, falling back to JWT strategy:', error)
   }
 }
 
