@@ -24,10 +24,10 @@ export async function generateWithSeedream(prompt: string, config: SeedreamConfi
     throw new Error('Seedream API key is not configured')
   }
 
-  // Map resolution to size (based on Seedream documentation)
+  // Map resolution to size (based on Seedream documentation examples)
   const sizeMap: { [key: string]: string } = {
-    '2K': '2048x2048',
-    '4K': '4096x4096',
+    '2K': '2K',
+    '4K': '4K',
     '512x512': '512x512',
     '1024x1024': '1024x1024',
   }
@@ -35,11 +35,11 @@ export async function generateWithSeedream(prompt: string, config: SeedreamConfi
   const body = {
     model: 'seedream-4-0-250828',
     prompt,
-    response_format: 'url',
-    size: sizeMap[config.resolution] || '2048x2048',
-    stream: false,
-    watermark: false,
     sequential_image_generation: 'disabled',
+    response_format: 'url',
+    size: sizeMap[config.resolution] || '2K',
+    stream: false,
+    watermark: false, // Set to false for cleaner images
   }
 
   console.log('Calling Seedream API:', { apiEndpoint, body })
@@ -62,15 +62,15 @@ export async function generateWithSeedream(prompt: string, config: SeedreamConfi
   const data = await response.json()
   console.log('Seedream API response:', data)
 
-  // Handle the official Seedream response format
+  // Handle the exact Seedream response format from their example
   let images: SeedreamImage[] = []
 
   if (data.data && Array.isArray(data.data) && data.data.length > 0) {
-    // Official Seedream response format
+    // Exact format from Seedream documentation
     images = data.data.map((item: any) => ({
       url: item.url,
-      width: item.width,
-      height: item.height,
+      width: item.size ? parseInt(item.size.split('x')[0]) : undefined,
+      height: item.size ? parseInt(item.size.split('x')[1]) : undefined,
       format: 'jpg',
     }))
   } else if (data.error) {
