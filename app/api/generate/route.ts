@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { auth } from '@/lib/auth'
+import { prisma } from '@/lib/db'
 import { generateWithSeedream, SeedreamConfig } from '@/lib/seedream'
 
 interface GenerateConfig {
@@ -52,54 +54,89 @@ function validateBody(body: unknown): GenerateRequestBody {
 
 export async function POST(request: NextRequest) {
   try {
+    const session = await auth()
+
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
     const raw = await request.json()
     const { prompt, config } = validateBody(raw)
-    
-    // Check if Seedream API is configured for real AI generation
-    if (process.env.SEEDREAM_API_KEY && process.env.SEEDREAM_API_ENDPOINT) {
-      try {
-        // Use real AI generation
-        const seedreamResult = await generateWithSeedream(prompt, config as GenerateConfig)
-        
-        return NextResponse.json(
-          {
-            id: `ai-${Date.now()}`,
-            prompt,
-            config,
-            status: 'complete',
-            images: seedreamResult.images,
-            remainingCredits: Math.max(0, 15 - config.count),
-            generatedWith: 'Seedream AI'
-          },
-          { status: 200 },
-        )
-      } catch (aiError) {
-        console.error('AI generation failed, falling back to demo mode:', aiError)
-        // Fall through to demo mode
-      }
+    const userId = session.user.id
+
+    // Load the user to check credits and organization context
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        creditsBalance: true,
+        organizationId: true,
+      },
+    })
+
+    if (!user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
-    
-    // Demo mode - fallback when API not configured or AI fails
-    const demoImages = [
-      `https://picsum.photos/seed/${prompt.replace(/\s+/g, '-')}-1/512/512.jpg`,
-      `https://picsum.photos/seed/${prompt.replace(/\s+/g, '-')}-2/512/512.jpg`,
-      `https://picsum.photos/seed/${prompt.replace(/\s+/g, '-')}-3/512/512.jpg`,
-    ].slice(0, config.count)
+
+    const creditsRequired = config.count
+
+    if (user.creditsBalance < creditsRequired) {
+      return NextResponse.json(
+        {
+          error: 'Not enough credits. Please upgrade your plan or top up.',
+        },
+        { status: 402 },
+      )
+    }
+
+    // Call Seedream 4.0 using the shared helper. This will throw if env is not configured.
+    const seedreamResult = await generateWithSeedream(prompt, config as GenerateConfig)
+
+    // Persist generation + images and deduct credits in a single transaction.
+    const [updatedUser, generation] = await prisma.$transaction([
+      prisma.user.update({
+        where: { id: user.id },
+        data: {
+          creditsBalance: {
+            decrement: creditsRequired,
+          },
+        },
+      }),
+      prisma.imageGeneration.create({
+        data: {
+          userId: user.id,
+          organizationId: user.organizationId,
+          prompt,
+          configMode: config.mode,
+          configResolution: config.resolution,
+          configRatio: config.ratio,
+          count: config.count,
+          status: 'complete',
+          creditsCharged: creditsRequired,
+          seedreamRequestId: null,
+          images: {
+            create: seedreamResult.images.map((img) => ({
+              url: img.url,
+              width: img.width ?? null,
+              height: img.height ?? null,
+              format: img.format ?? null,
+            })),
+          },
+        },
+        include: {
+          images: true,
+        },
+      }),
+    ])
 
     return NextResponse.json(
       {
-        id: `demo-${Date.now()}`,
-        prompt,
+        id: generation.id,
+        prompt: generation.prompt,
         config,
-        status: 'complete',
-        images: demoImages.map((url, index) => ({
-          url,
-          width: 512,
-          height: 512,
-          format: 'jpg',
-        })),
-        remainingCredits: Math.max(0, 15 - config.count),
-        generatedWith: 'Demo Mode'
+        status: generation.status,
+        images: seedreamResult.images,
+        remainingCredits: updatedUser.creditsBalance,
       },
       { status: 200 },
     )

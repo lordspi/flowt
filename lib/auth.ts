@@ -1,5 +1,7 @@
 import NextAuth, { DefaultSession } from 'next-auth'
 import Google from 'next-auth/providers/google'
+import { PrismaAdapter } from '@auth/prisma-adapter'
+import { prisma } from './db'
 import type { NextAuthConfig, Session } from 'next-auth'
 import { JWT } from 'next-auth/jwt'
 
@@ -25,8 +27,13 @@ type JwtCallbackParams = {
 }
 
 export const authConfig = {
-  // Remove PrismaAdapter for demo mode to avoid database connection during build
-  providers: [Google],
+  adapter: PrismaAdapter(prisma),
+  providers: [
+    Google({
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+    }),
+  ],
   callbacks: {
     async session({ session, token }: SessionCallbackParams) {
       if (session.user && token.sub) {
@@ -34,17 +41,35 @@ export const authConfig = {
         ;(session.user as any).role = (token as any).role || 'user'
         ;(session.user as any).organizationId = (token as any).organizationId ?? null
         ;(session.user as any).currentPlan = (token as any).currentPlan || 'FREE'
-        ;(session.user as any).creditsBalance = (token as any).creditsBalance ?? 15
+        ;(session.user as any).creditsBalance = (token as any).creditsBalance ?? 0
       }
       return session
     },
     async jwt({ token }: JwtCallbackParams) {
-      // Skip database lookup for demo mode
+      if (!token.sub) return token
+
+      const user = await prisma.user.findUnique({
+        where: { id: token.sub },
+        select: {
+          role: true,
+          organizationId: true,
+          currentPlan: true,
+          creditsBalance: true,
+        },
+      })
+
+      if (user) {
+        ;(token as any).role = user.role
+        ;(token as any).organizationId = user.organizationId
+        ;(token as any).currentPlan = user.currentPlan
+        ;(token as any).creditsBalance = user.creditsBalance
+      }
+
       return token
     },
   },
   session: {
-    strategy: 'jwt',
+    strategy: 'database',
   },
 } satisfies NextAuthConfig
 

@@ -17,7 +17,7 @@ export default function GeneratePage() {
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement | null>(null)
 
-  // Load current user and credits; if unauthorized, show demo mode
+  // Load current user and credits
   useEffect(() => {
     let cancelled = false
 
@@ -25,22 +25,20 @@ export default function GeneratePage() {
       try {
         const res = await fetch('/api/user/me')
         if (res.status === 401) {
-          // Set demo credits instead of redirecting
-          setConfig((prev) => ({ ...prev, credits: 15 }))
+          // Redirect to sign in for unauthorized users
+          router.push('/api/auth/signin')
           return
         }
         if (!res.ok) {
-          // Set demo credits on error
-          setConfig((prev) => ({ ...prev, credits: 15 }))
-          return
+          throw new Error('Failed to load user data')
         }
         const user = await res.json()
         if (!cancelled && typeof user.creditsBalance === 'number') {
           setConfig((prev) => ({ ...prev, credits: user.creditsBalance }))
         }
       } catch (error) {
-        // Set demo credits on error
-        if (!cancelled) setConfig((prev) => ({ ...prev, credits: 15 }))
+        console.error('Error loading user:', error)
+        if (!cancelled) router.push('/api/auth/signin')
       } finally {
         if (!cancelled) setIsLoadingUser(false)
       }
