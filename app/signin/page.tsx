@@ -1,13 +1,13 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { signIn } from 'next-auth/react'
 import { ArrowLeft, Sparkles, Gift, Zap, Shield, Star, Rocket } from 'lucide-react'
 import { useRouter, useSearchParams } from 'next/navigation'
 
 export const dynamic = 'force-dynamic'
 
-export default function SignInPage() {
+function SignInContent() {
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -42,11 +42,13 @@ export default function SignInPage() {
         <div className="bg-white rounded-3xl shadow-xl border border-gray-100 p-8 space-y-8">
           {/* Logo and title */}
           <div className="text-center space-y-4">
-            <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-blue-600 rounded-2xl mx-auto flex items-center justify-center">
+            <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl mx-auto flex items-center justify-center">
               <Sparkles className="w-8 h-8 text-white" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Welcome to Flowt 2.0</h1>
+              <h1 className="text-2xl font-bold text-gray-900">
+                Welcome to <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Flowt 2.0</span>
+              </h1>
               <p className="text-gray-600 mt-2">
                 {fromPrompt ? 'Sign in to generate your amazing image' : 'Sign in to start creating amazing AI images'}
               </p>
@@ -69,20 +71,20 @@ export default function SignInPage() {
           {/* Features list */}
           <div className="space-y-3">
             <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-green-50 rounded-full flex items-center justify-center">
-                <Zap className="w-4 h-4 text-green-600" />
+              <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
+                <Zap className="w-4 h-4 text-gray-700" />
               </div>
               <p className="text-sm text-gray-700">Generate stunning AI images instantly</p>
             </div>
             <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-blue-50 rounded-full flex items-center justify-center">
-                <Shield className="w-4 h-4 text-blue-600" />
+              <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
+                <Shield className="w-4 h-4 text-gray-700" />
               </div>
               <p className="text-sm text-gray-700">Secure and private authentication</p>
             </div>
             <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-yellow-50 rounded-full flex items-center justify-center">
-                <Star className="w-4 h-4 text-yellow-600" />
+              <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
+                <Star className="w-4 h-4 text-gray-700" />
               </div>
               <p className="text-sm text-gray-700">No credit card required</p>
             </div>
@@ -114,14 +116,25 @@ export default function SignInPage() {
         {/* Bottom promo */}
         <div className="mt-8 text-center space-y-2">
           <p className="text-sm text-gray-600">
-            No credit card required • Free forever plan available
+            Start with 15 free credits • Upgrade when you need more
           </p>
-          <div className="flex items-center justify-center space-x-2 text-xs text-gray-500">
-            <Rocket className="w-3 h-3" />
-            <span>Join thousands creating amazing AI images</span>
-          </div>
         </div>
       </div>
     </div>
+  )
+}
+
+export default function SignInPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50 flex items-center justify-center p-4">
+        <div className="text-center">
+          <div className="w-8 h-8 border-2 border-purple-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    }>
+      <SignInContent />
+    </Suspense>
   )
 }
