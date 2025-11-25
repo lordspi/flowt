@@ -325,7 +325,7 @@ export default function Home() {
     }
   }
 
-  // Fixed: handleGoPricing function (only one definition now)
+  // Pricing navigation - single definition only
   const handleGoPricing = () => {
     if (pricingRef.current) {
       pricingRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
