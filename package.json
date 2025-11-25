@@ -2,7 +2,7 @@
   "name": "flowt-ai-generator",
   "version": "1.0.0",
   "private": true,
-  "description": "AI-powered image generation platform with Flowt 4.0",
+  "description": "AI-powered image generation platform with Flowt 2.0",
   "author": "Flowt Team",
   "license": "MIT",
   "scripts": {

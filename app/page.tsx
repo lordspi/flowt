@@ -296,28 +296,70 @@ export default function Home() {
       }
 
       const data = await res.json()
-      const keyId = data.razorpay?.keyId
 
-      if (typeof window !== 'undefined' && (window as any).Razorpay && keyId && data.razorpay?.subscription) {
-        const options = {
-          key: keyId,
-          subscription_id: data.razorpay.subscription.id,
-          name: 'Flowt',
-          description: `${planId} subscription`,
-          notes: {
-            flowt_plan: planId,
-          },
-          prefill: {
-            name: data.razorpay.user?.name || undefined,
-            email: data.razorpay.user?.email || undefined,
-          },
-        }
-
-        const rzp = new (window as any).Razorpay(options)
-        rzp.open()
+      if (data.error) {
+        console.error('Checkout error:', data.error)
+        return
       }
+
+      // Initialize Razorpay
+      const Razorpay = require('razorpay')
+      const razorpay = new Razorpay({
+        key_id: data.keyId,
+        key_secret: process.env.RAZORPAY_KEY_SECRET,
+      })
+
+      const options = {
+        order_id: data.orderId,
+        amount: data.amount,
+        currency: data.currency,
+        name: 'Flowt AI 2.0',
+        description: `${data.plan.name} Plan - ${data.plan.credits} Credits`,
+        image: '/favicon.ico',
+        prefill: {
+          name: data.user.name,
+          email: data.user.email,
+        },
+        notes: {
+          planId: data.plan.id,
+          userId: data.user.email,
+        },
+        handler: async (response: any) => {
+          // Handle payment success
+          try {
+            const successRes = await fetch('/api/subscription/success', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+                planId: data.plan.id,
+              }),
+            })
+
+            if (successRes.ok) {
+              // Payment successful, redirect to generate page
+              router.push('/generate?payment=success')
+            } else {
+              console.error('Payment verification failed')
+            }
+          } catch (error) {
+            console.error('Payment success handler error:', error)
+          }
+        },
+        modal: {
+          ondismiss: function() {
+            console.log('Payment modal dismissed')
+          },
+        },
+      }
+
+      const paymentObject = new razorpay(options)
+      paymentObject.open()
+
     } catch (error) {
-      console.error('Error starting subscription', error)
+      console.error('Payment error:', error)
     }
   }
 

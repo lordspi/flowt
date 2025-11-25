@@ -94,7 +94,7 @@ export async function POST(request: NextRequest) {
           )
         }
 
-        // Call Seedream 4.0 using the shared helper. This will throw if env is not configured.
+        // Call Seedream 2.0 using the shared helper. This will throw if env is not configured.
         const seedreamResult = await generateWithSeedream(prompt, config as GenerateConfig)
 
         // Persist generation + images and deduct credits in a single transaction.

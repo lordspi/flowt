@@ -24,7 +24,7 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Gradient animation for "4.0" text */
+/* Gradient animation for "2.0" text */
 @keyframes gradient {
   0%,
   100% {
