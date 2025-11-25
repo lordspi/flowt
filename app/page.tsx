@@ -302,61 +302,63 @@ export default function Home() {
         return
       }
 
-      // Initialize Razorpay
-      const Razorpay = require('razorpay')
-      const razorpay = new Razorpay({
-        key_id: data.keyId,
-        key_secret: process.env.RAZORPAY_KEY_SECRET,
-      })
+      // Load Razorpay script dynamically
+      const script = document.createElement('script')
+      script.src = 'https://checkout.razorpay.com/v1/checkout.js'
+      script.async = true
+      document.body.appendChild(script)
 
-      const options = {
-        order_id: data.orderId,
-        amount: data.amount,
-        currency: data.currency,
-        name: 'Flowt AI 2.0',
-        description: `${data.plan.name} Plan - ${data.plan.credits} Credits`,
-        image: '/favicon.ico',
-        prefill: {
-          name: data.user.name,
-          email: data.user.email,
-        },
-        notes: {
-          planId: data.plan.id,
-          userId: data.user.email,
-        },
-        handler: async (response: any) => {
-          // Handle payment success
-          try {
-            const successRes = await fetch('/api/subscription/success', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                razorpay_order_id: response.razorpay_order_id,
-                razorpay_payment_id: response.razorpay_payment_id,
-                razorpay_signature: response.razorpay_signature,
-                planId: data.plan.id,
-              }),
-            })
-
-            if (successRes.ok) {
-              // Payment successful, redirect to generate page
-              router.push('/generate?payment=success')
-            } else {
-              console.error('Payment verification failed')
-            }
-          } catch (error) {
-            console.error('Payment success handler error:', error)
-          }
-        },
-        modal: {
-          ondismiss: function() {
-            console.log('Payment modal dismissed')
+      script.onload = () => {
+        const options = {
+          key: data.keyId,
+          order_id: data.orderId,
+          amount: data.amount,
+          currency: data.currency,
+          name: 'Flowt AI 2.0',
+          description: `${data.plan.name} Plan - ${data.plan.credits} Credits`,
+          image: '/favicon.ico',
+          prefill: {
+            name: data.user.name,
+            email: data.user.email,
           },
-        },
-      }
+          notes: {
+            planId: data.plan.id,
+            userId: data.user.email,
+          },
+          handler: async (response: any) => {
+            // Handle payment success
+            try {
+              const successRes = await fetch('/api/subscription/success', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  razorpay_order_id: response.razorpay_order_id,
+                  razorpay_payment_id: response.razorpay_payment_id,
+                  razorpay_signature: response.razorpay_signature,
+                  planId: data.plan.id,
+                }),
+              })
 
-      const paymentObject = new razorpay(options)
-      paymentObject.open()
+              if (successRes.ok) {
+                // Payment successful, redirect to generate page
+                router.push('/generate?payment=success')
+              } else {
+                console.error('Payment verification failed')
+              }
+            } catch (error) {
+              console.error('Payment success handler error:', error)
+            }
+          },
+          modal: {
+            ondismiss: function() {
+              console.log('Payment modal dismissed')
+            },
+          },
+        }
+
+        const paymentObject = new (window as any).Razorpay(options)
+        paymentObject.open()
+      }
 
     } catch (error) {
       console.error('Payment error:', error)
