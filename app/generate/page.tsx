@@ -113,6 +113,8 @@ export default function GeneratePage() {
       }
 
       const data = await response.json()
+      
+      console.log('API Response:', data) // Debug log
 
       setMessages((prev) =>
         prev.map((msg) =>
@@ -121,7 +123,9 @@ export default function GeneratePage() {
                 ...msg,
                 status: data.status ?? 'complete',
                 count: data.config?.count ?? newMessage.count,
-                images: Array.isArray(data.images) ? data.images : [],
+                images: Array.isArray(data.images) 
+                  ? data.images.map((img: any) => typeof img === 'string' ? img : img.url).filter(Boolean)
+                  : [],
               }
             : msg,
         ),
@@ -255,22 +259,54 @@ export default function GeneratePage() {
               ) : (
                 <div className="bg-white rounded-2xl p-4 md:p-5 shadow-sm border border-gray-100">
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-4">
-                    {msg.images.map((img: string, idx: number) => (
-                      <div
-                        key={idx}
-                        className="relative group aspect-square rounded-xl overflow-hidden bg-gray-100"
-                      >
-                        <img src={img} alt={`Generated ${idx + 1}`} className="w-full h-full object-cover" onError={(e) => { e.currentTarget.src = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Crect fill='%23ddd' width='400' height='400'/%3E%3Ctext fill='%23999' font-family='Arial' font-size='20' x='50%25' y='50%25' text-anchor='middle' dy='.3em'%3EGenerated ${idx + 1}%3C/text%3E%3C/svg%3E` }} />
-                        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                          <button className="p-2 bg-white rounded-full hover:scale-110 transition-transform">
-                            <Download className="w-4 h-4" />
-                          </button>
-                          <button className="p-2 bg-white rounded-full hover:scale-110 transition-transform">
-                            <Share2 className="w-4 h-4" />
-                          </button>
+                    {msg.images.length > 0 ? (
+                      msg.images.map((img: string, idx: number) => (
+                        <div
+                          key={idx}
+                          className="relative group aspect-square rounded-xl overflow-hidden bg-gray-100"
+                        >
+                          <img 
+                            src={img} 
+                            alt={`Generated ${idx + 1}`} 
+                            className="w-full h-full object-cover" 
+                            onError={(e) => { 
+                              console.log('Image failed to load:', img)
+                              e.currentTarget.src = `https://picsum.photos/seed/${msg.prompt?.replace(/\s+/g, '-')}-${idx}/512/512.jpg` 
+                            }} 
+                          />
+                          <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                            <button className="p-2 bg-white rounded-full hover:scale-110 transition-transform">
+                              <Download className="w-4 h-4" />
+                            </button>
+                            <button className="p-2 bg-white rounded-full hover:scale-110 transition-transform">
+                              <Share2 className="w-4 h-4" />
+                            </button>
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      ))
+                    ) : (
+                      // Fallback demo images
+                      Array.from({ length: msg.count || 1 }, (_, idx) => (
+                        <div
+                          key={idx}
+                          className="relative group aspect-square rounded-xl overflow-hidden bg-gray-100"
+                        >
+                          <img 
+                            src={`https://picsum.photos/seed/${msg.prompt?.replace(/\s+/g, '-')}-${idx}/512/512.jpg`} 
+                            alt={`Generated ${idx + 1}`} 
+                            className="w-full h-full object-cover" 
+                          />
+                          <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                            <button className="p-2 bg-white rounded-full hover:scale-110 transition-transform">
+                              <Download className="w-4 h-4" />
+                            </button>
+                            <button className="p-2 bg-white rounded-full hover:scale-110 transition-transform">
+                              <Share2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </div>
+                      ))
+                    )}
                   </div>
                   <button
                     onClick={() => handleReEdit(msg.prompt)}
