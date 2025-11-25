@@ -19,21 +19,21 @@ export const PLANS: Record<PlanId, PlanConfig> = {
   BASIC: {
     id: 'BASIC',
     name: 'Basic',
-    priceCents: 2000,
+    priceCents: 20000, // ₹200 in paise (for Razorpay INR)
     credits: 120,
     description: '120 Ultra HD images per month.',
   },
   ENHANCED: {
     id: 'ENHANCED',
     name: 'Enhanced',
-    priceCents: 4900,
+    priceCents: 49000, // ₹490 in paise (for Razorpay INR)
     credits: 400,
     description: '400 Ultra HD images per month.',
   },
   PREMIUM: {
     id: 'PREMIUM',
     name: 'Premium',
-    priceCents: 9900,
+    priceCents: 99000, // ₹990 in paise (for Razorpay INR)
     credits: 1100,
     description: '1100 Ultra HD images per month.',
   },

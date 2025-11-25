@@ -54,8 +54,8 @@ export async function POST(request: NextRequest) {
         await prisma.transaction.create({
           data: {
             userId: session.user.id,
-            amount: planId === 'BASIC' ? 2000 : planId === 'ENHANCED' ? 4900 : 9900, // Amount in cents
-            currency: 'usd',
+            amount: planId === 'BASIC' ? 20000 : planId === 'ENHANCED' ? 49000 : 99000, // Amount in paise (INR)
+            currency: 'inr',
             providerPaymentId: razorpay_payment_id,
             provider: 'RAZORPAY',
             type: 'SUBSCRIPTION',
@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
             metadata: {
               planId,
               creditsAdded: creditsToAdd,
-              originalAmount: planId === 'BASIC' ? 20 : planId === 'ENHANCED' ? 49 : 99,
+              originalAmount: planId === 'BASIC' ? 200 : planId === 'ENHANCED' ? 490 : 990, // INR amounts
             },
           },
         })
