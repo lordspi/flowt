@@ -16,7 +16,7 @@ export interface SeedreamResult {
   images: SeedreamImage[]
 }
 
-export async function generateWithSeedream(prompt: string, config: SeedreamConfig): Promise<SeeddreamResult> {
+export async function generateWithSeedream(prompt: string, config: SeedreamConfig): Promise<SeedreamResult> {
   const apiKey = process.env.SEEDREAM_API_KEY
   const apiEndpoint = process.env.SEEDREAM_API_ENDPOINT || 'https://ark.ap-southeast.bytepluses.com/api/v3/images/generations'
 
