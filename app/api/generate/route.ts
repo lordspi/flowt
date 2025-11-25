@@ -158,12 +158,12 @@ export async function POST(request: NextRequest) {
     
     console.log('Generate request received:', { prompt, config })
     console.log('Environment check:', {
-      hasApiKey: !!process.env.SEEDREAM_API_KEY,
+      hasApiKey: !!process.env.ARK_API_KEY,
       hasEndpoint: !!process.env.SEEDREAM_API_ENDPOINT,
       hasDatabase: !!process.env.DATABASE_URL,
     })
     
-    if (process.env.SEEDREAM_API_KEY && process.env.SEEDREAM_API_ENDPOINT) {
+    if (process.env.ARK_API_KEY && process.env.SEEDREAM_API_ENDPOINT) {
       try {
         // Use real AI generation without database
         console.log('Attempting real AI generation...')
