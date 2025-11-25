@@ -27,11 +27,11 @@ export interface SeedreamResult {
 }
 
 export async function generateWithSeedream(prompt: string, config: SeedreamConfig): Promise<SeedreamResult> {
-  const apiKey = process.env.SEEDREAM_API_KEY
+  const apiKey = process.env.ARK_API_KEY
   const apiEndpoint = process.env.SEEDREAM_API_ENDPOINT || 'https://ark.ap-southeast.bytepluses.com/api/v3/images/generations'
 
   if (!apiKey) {
-    throw new Error('Seedream API key is not configured')
+    throw new Error('ARK_API_KEY is not configured. Please set your BytePlus API key.')
   }
 
   // Map resolution to size (based on Seedream documentation examples)
