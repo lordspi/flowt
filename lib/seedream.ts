@@ -3,6 +3,16 @@ export interface SeedreamConfig {
   resolution: string
   ratio: string
   count: number
+  // New features for enhanced generation
+  model?: string
+  image?: string | string[]
+  sequentialImageGeneration?: 'disabled' | 'auto'
+  sequentialImageGenerationOptions?: {
+    max_images?: number
+  }
+  stream?: boolean
+  seed?: number
+  guidanceScale?: number
 }
 
 export interface SeedreamImage {
@@ -30,16 +40,35 @@ export async function generateWithSeedream(prompt: string, config: SeedreamConfi
     '4K': '4K',
     '512x512': '512x512',
     '1024x1024': '1024x1024',
+    'adaptive': 'adaptive',
   }
 
-  const body = {
-    model: 'seedream-4-0-250828',
+  // Build request body based on available features
+  const body: any = {
+    model: config.model || 'seedream-4-0-250828',
     prompt,
-    sequential_image_generation: 'disabled',
     response_format: 'url',
     size: sizeMap[config.resolution] || '2K',
-    stream: false,
+    stream: config.stream || false,
     watermark: false, // Set to false for cleaner images
+    sequential_image_generation: config.sequentialImageGeneration || 'disabled',
+  }
+
+  // Add optional parameters if provided
+  if (config.image) {
+    body.image = config.image
+  }
+
+  if (config.sequentialImageGeneration === 'auto' && config.sequentialImageGenerationOptions) {
+    body.sequential_image_generation_options = config.sequentialImageGenerationOptions
+  }
+
+  if (config.seed !== undefined) {
+    body.seed = config.seed
+  }
+
+  if (config.guidanceScale !== undefined) {
+    body.guidance_scale = config.guidanceScale
   }
 
   console.log('Calling Seedream API:', { apiEndpoint, body })
@@ -59,10 +88,61 @@ export async function generateWithSeedream(prompt: string, config: SeedreamConfi
     throw new Error(`Seedream request failed: ${response.status} ${text}`)
   }
 
+  // Handle streaming response
+  if (config.stream) {
+    const reader = response.body?.getReader()
+    if (!reader) {
+      throw new Error('Streaming response not available')
+    }
+
+    const decoder = new TextDecoder()
+    let images: SeedreamImage[] = []
+
+    try {
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+
+        const chunk = decoder.decode(value, { stream: true })
+        const lines = chunk.split('\n')
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6)
+            if (data === '[DONE]') continue
+
+            try {
+              const parsed = JSON.parse(data)
+              if (parsed.type === 'image_generation.partial_succeeded' && parsed.url) {
+                images.push({
+                  url: parsed.url,
+                  width: parsed.size ? parseInt(parsed.size.split('x')[0]) : undefined,
+                  height: parsed.size ? parseInt(parsed.size.split('x')[1]) : undefined,
+                  format: 'jpg',
+                })
+              }
+            } catch (e) {
+              // Ignore parsing errors for streaming data
+            }
+          }
+        }
+      }
+    } finally {
+      reader.releaseLock()
+    }
+
+    if (images.length === 0) {
+      throw new Error('No images received from streaming response')
+    }
+
+    return { images }
+  }
+
+  // Handle non-streaming response
   const data = await response.json()
   console.log('Seedream API response:', data)
 
-  // Handle the exact Seedream response format from their example
+  // Handle the exact Seedream response format from their examples
   let images: SeedreamImage[] = []
 
   if (data.data && Array.isArray(data.data) && data.data.length > 0) {
