@@ -380,7 +380,6 @@ export default function Home() {
       <header className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-200">
         <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded" />
             <span className="text-lg font-semibold tracking-tight">Flowt</span>
           </div>
           <div className="flex items-center gap-3 text-sm">
