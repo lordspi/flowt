@@ -287,7 +287,7 @@ export default function Home() {
       const res = await fetch('/api/subscription/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ planId, currency: 'USD' }),
+        body: JSON.stringify({ planId, currency: 'INR' }),
       })
 
       if (!res.ok) {
