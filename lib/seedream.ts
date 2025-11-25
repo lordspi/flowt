@@ -62,32 +62,57 @@ export async function generateWithSeedream(prompt: string, config: SeedreamConfi
   const data = await response.json()
   console.log('Seedream API response:', data)
 
-  // Handle the response format based on the actual API response
+  // Handle the actual Seedream response format
   let images: SeedreamImage[] = []
 
-  if (data.images && Array.isArray(data.images)) {
+  // Based on your logs, the response seems to have a different structure
+  // Let's handle multiple possible formats
+  
+  if (data.data && data.data.length > 0) {
+    // If response has data array with image objects
+    images = data.data.map((item: any) => ({
+      url: item.url || item.image_url,
+      width: item.width,
+      height: item.height,
+      format: item.format || 'jpg',
+    }))
+  } else if (data.images && Array.isArray(data.images)) {
     // If API returns images array
     images = data.images.map((img: any) => ({
-      url: typeof img === 'string' ? img : img.url,
+      url: typeof img === 'string' ? img : img.url || img.image_url,
       width: img.width,
       height: img.height,
-      format: img.format,
+      format: img.format || 'jpg',
     }))
   } else if (data.image) {
     // If API returns single image
     images = [{
-      url: typeof data.image === 'string' ? data.image : data.image.url,
+      url: typeof data.image === 'string' ? data.image : data.image.url || data.image.image_url,
       width: data.image.width,
       height: data.image.height,
-      format: data.image.format,
+      format: data.image.format || 'jpg',
     }]
   } else if (data.url) {
     // If API returns direct URL
-    images = [{ url: data.url }]
+    images = [{ url: data.url, format: 'jpg' }]
+  } else if (data.generated_images && data.generated_images.length > 0) {
+    // Handle the format you mentioned in logs
+    images = data.generated_images.map((img: any) => ({
+      url: img.url || img.image_url,
+      width: img.width,
+      height: img.height,
+      format: img.format || 'jpg',
+    }))
   } else {
-    console.error('Unexpected Seedream response format:', data)
-    throw new Error('Invalid response format from Seedream API')
+    // Log the actual response for debugging
+    console.error('Unexpected Seedream response format. Full response:', JSON.stringify(data, null, 2))
+    throw new Error(`Invalid response format from Seedream API. Response keys: ${Object.keys(data).join(', ')}`)
   }
 
+  if (images.length === 0) {
+    throw new Error('No images returned from Seedream API')
+  }
+
+  console.log('Successfully parsed images:', images.length)
   return { images }
 }
