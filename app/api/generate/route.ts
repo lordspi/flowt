@@ -170,7 +170,7 @@ export async function POST(request: NextRequest) {
         console.log('Prompt:', prompt)
         console.log('Config:', config)
         
-        const seeddreamResult = await generateWithSeedream(prompt, config as GenerateConfig)
+        const seedreamResult = await generateWithSeedream(prompt, config as GenerateConfig)
         console.log('AI generation successful:', seedreamResult)
         console.log('Number of images generated:', seedreamResult.images.length)
         images = seedreamResult.images
