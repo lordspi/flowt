@@ -154,10 +154,19 @@ export async function POST(request: NextRequest) {
     // Demo mode - fallback when database not available
     let images
     
+    console.log('Generate request received:', { prompt, config })
+    console.log('Environment check:', {
+      hasApiKey: !!process.env.SEEDREAM_API_KEY,
+      hasEndpoint: !!process.env.SEEDREAM_API_ENDPOINT,
+      hasDatabase: !!process.env.DATABASE_URL,
+    })
+    
     if (process.env.SEEDREAM_API_KEY && process.env.SEEDREAM_API_ENDPOINT) {
       try {
         // Use real AI generation without database
+        console.log('Attempting real AI generation...')
         const seedreamResult = await generateWithSeedream(prompt, config as GenerateConfig)
+        console.log('AI generation successful:', seedreamResult)
         images = seedreamResult.images
       } catch (aiError) {
         console.warn('AI generation failed, using demo images:', aiError)
@@ -169,6 +178,7 @@ export async function POST(request: NextRequest) {
         ].slice(0, config.count)
       }
     } else {
+      console.log('Using demo images - API keys not configured')
       // Demo images
       images = [
         `https://picsum.photos/seed/${prompt.replace(/\s+/g, '-')}-1/512/512.jpg`,
@@ -177,22 +187,23 @@ export async function POST(request: NextRequest) {
       ].slice(0, config.count)
     }
 
-    return NextResponse.json(
-      {
-        id: `demo-${Date.now()}`,
-        prompt,
-        config,
-        status: 'complete',
-        images: images.map((url, index) => ({
-          url,
-          width: 512,
-          height: 512,
-          format: 'jpg',
-        })),
-        remainingCredits: Math.max(0, 15 - config.count),
-      },
-      { status: 200 },
-    )
+    const response = {
+      id: `demo-${Date.now()}`,
+      prompt,
+      config,
+      status: 'complete',
+      images: images.map((url, index) => ({
+        url,
+        width: 512,
+        height: 512,
+        format: 'jpg',
+      })),
+      remainingCredits: Math.max(0, 15 - config.count),
+    }
+    
+    console.log('Sending response:', response)
+    
+    return NextResponse.json(response, { status: 200 })
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error'
 
