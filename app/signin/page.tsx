@@ -1,23 +1,17 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { signIn, useSession } from 'next-auth/react'
+import { signIn } from 'next-auth/react'
 import { ArrowLeft, Sparkles, Gift, Zap, Shield, Star, Rocket } from 'lucide-react'
 import { useRouter, useSearchParams } from 'next/navigation'
+
+export const dynamic = 'force-dynamic'
 
 export default function SignInPage() {
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
   const searchParams = useSearchParams()
-  const { data: session } = useSession()
   const fromPrompt = searchParams.get('prompt')
-
-  // Redirect if already authenticated
-  useEffect(() => {
-    if (session) {
-      router.push(fromPrompt ? `/generate?prompt=${encodeURIComponent(fromPrompt)}` : '/generate')
-    }
-  }, [session, router, fromPrompt])
 
   const handleGoogleSignIn = async () => {
     setIsLoading(true)

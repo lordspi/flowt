@@ -9,8 +9,8 @@ let prisma: any = null
 
 if (process.env.DATABASE_URL) {
   try {
-    const adapterModule = require('@auth/prisma-adapter')
-    PrismaAdapter = adapterModule.PrismaAdapter
+    const adapterModule = require('@auth/prisma-adapter').default
+    PrismaAdapter = adapterModule
     prisma = require('./db').prisma
   } catch (error) {
     console.warn('Database adapter not available, falling back to JWT strategy')

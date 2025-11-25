@@ -3,6 +3,8 @@ import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { generateWithSeedream, SeedreamConfig } from '@/lib/seedream'
 
+export const dynamic = 'force-dynamic'
+
 interface GenerateConfig {
   mode: string
   resolution: string
