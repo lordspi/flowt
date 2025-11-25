@@ -1,0 +1,4 @@
+        const seedreamResult = await generateWithSeedream(prompt, config as GenerateConfig)
+        console.log('AI generation successful:', seeddreamResult)
+        console.log('Number of images generated:', seeddreamResult.images.length)
+        images = seeddreamResult.images
