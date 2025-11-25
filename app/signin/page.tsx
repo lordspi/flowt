@@ -1,18 +1,30 @@
 'use client'
 
-import { useState } from 'react'
-import { signIn } from 'next-auth/react'
-import { ArrowLeft, Sparkles, Gift, Zap, Shield } from 'lucide-react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react'
+import { signIn, useSession } from 'next-auth/react'
+import { ArrowLeft, Sparkles, Gift, Zap, Shield, Star, Rocket } from 'lucide-react'
+import { useRouter, useSearchParams } from 'next/navigation'
 
 export default function SignInPage() {
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const { data: session } = useSession()
+  const fromPrompt = searchParams.get('prompt')
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (session) {
+      router.push(fromPrompt ? `/generate?prompt=${encodeURIComponent(fromPrompt)}` : '/generate')
+    }
+  }, [session, router, fromPrompt])
 
   const handleGoogleSignIn = async () => {
     setIsLoading(true)
     try {
-      await signIn('google', { callbackUrl: '/generate' })
+      await signIn('google', { 
+        callbackUrl: fromPrompt ? `/generate?prompt=${encodeURIComponent(fromPrompt)}` : '/generate' 
+      })
     } catch (error) {
       console.error('Sign in error:', error)
     } finally {
@@ -41,7 +53,9 @@ export default function SignInPage() {
             </div>
             <div>
               <h1 className="text-2xl font-bold text-gray-900">Welcome to Flowt 2.0</h1>
-              <p className="text-gray-600 mt-2">Sign in to start creating amazing AI images</p>
+              <p className="text-gray-600 mt-2">
+                {fromPrompt ? 'Sign in to generate your amazing image' : 'Sign in to start creating amazing AI images'}
+              </p>
             </div>
           </div>
 
@@ -72,6 +86,12 @@ export default function SignInPage() {
               </div>
               <p className="text-sm text-gray-700">Secure and private authentication</p>
             </div>
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 bg-yellow-50 rounded-full flex items-center justify-center">
+                <Star className="w-4 h-4 text-yellow-600" />
+              </div>
+              <p className="text-sm text-gray-700">No credit card required</p>
+            </div>
           </div>
 
           {/* Sign-in button */}
@@ -98,10 +118,14 @@ export default function SignInPage() {
         </div>
 
         {/* Bottom promo */}
-        <div className="mt-8 text-center">
+        <div className="mt-8 text-center space-y-2">
           <p className="text-sm text-gray-600">
             No credit card required • Free forever plan available
           </p>
+          <div className="flex items-center justify-center space-x-2 text-xs text-gray-500">
+            <Rocket className="w-3 h-3" />
+            <span>Join thousands creating amazing AI images</span>
+          </div>
         </div>
       </div>
     </div>

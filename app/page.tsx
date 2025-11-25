@@ -252,9 +252,26 @@ export default function Home() {
   }, [companyLogos.length])
 
   const handleGenerate = () => {
-    if (prompt.trim()) {
-      router.push(`/generate?prompt=${encodeURIComponent(prompt)}`)
+    if (!prompt.trim()) return
+    
+    // Check if user is authenticated
+    const checkAuth = async () => {
+      try {
+        const res = await fetch('/api/user/me')
+        if (res.status === 401) {
+          // Redirect to sign-in with prompt and credits message
+          router.push(`/signin?prompt=${encodeURIComponent(prompt)}`)
+          return
+        }
+        // User is authenticated, proceed to generate
+        router.push(`/generate?prompt=${encodeURIComponent(prompt)}`)
+      } catch (error) {
+        // Assume not authenticated, redirect to sign-in
+        router.push(`/signin?prompt=${encodeURIComponent(prompt)}`)
+      }
     }
+    
+    checkAuth()
   }
 
   const handlePromptSubmit = () => {

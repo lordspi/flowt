@@ -35,6 +35,11 @@ export default function GeneratePage() {
         const user = await res.json()
         if (!cancelled && typeof user.creditsBalance === 'number') {
           setConfig((prev) => ({ ...prev, credits: user.creditsBalance }))
+          
+          // Show low credit warning
+          if (user.creditsBalance <= 5 && user.creditsBalance > 0) {
+            setShowLowCreditWarning(true)
+          }
         }
       } catch (error) {
         console.error('Error loading user:', error)
@@ -50,6 +55,9 @@ export default function GeneratePage() {
       cancelled = true
     }
   }, [])
+
+  const [showLowCreditWarning, setShowLowCreditWarning] = useState(false)
+  const [showZeroCreditModal, setShowZeroCreditModal] = useState(false)
 
   // Read ?prompt= from URL on the client and trigger an initial generation once, after auth check
   useEffect(() => {
@@ -71,7 +79,19 @@ export default function GeneratePage() {
   useEffect(scrollToBottom, [messages])
 
   const handleGenerate = async (promptText: string = prompt) => {
-    if (!promptText.trim()) return
+    if (!promptText.trim() || isGenerating) return
+
+    // Check credits before generation
+    if (config.credits <= 0) {
+      setShowZeroCreditModal(true)
+      return
+    }
+
+    if (config.credits <= 5) {
+      setShowLowCreditWarning(true)
+    }
+
+    setIsGenerating(true)
 
     const newMessage = {
       id: Date.now(),
@@ -174,9 +194,20 @@ export default function GeneratePage() {
         </div>
         <div className="flex items-center gap-3">
           <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-100 text-xs text-gray-700">
-            <span className="w-2 h-2 rounded-full bg-green-500" />
-            <span>{config.credits} credits left</span>
+            <span className="w-2 h-2 rounded-full bg-purple-500" />
+            <span>{config.credits} credits</span>
           </div>
+          
+          {/* Upgrade button - show when credits are low */}
+          {(config.credits <= 5 || config.credits === 0) && (
+            <button
+              onClick={() => router.push('/#pricing')}
+              className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-gradient-to-r from-purple-500 to-blue-500 text-white text-xs font-medium shadow-sm hover:shadow-md transition-shadow"
+            >
+              <span>⚡ Upgrade</span>
+            </button>
+          )}
+          
           <button
             onClick={() => router.push('/gallery')}
             className="flex items-center gap-2 px-3 py-2 hover:bg-gray-100 rounded-lg transition-colors text-sm"
@@ -517,6 +548,71 @@ export default function GeneratePage() {
           </>
         )}
       </AnimatePresence>
+
+      {/* Low Credit Warning */}
+      {showLowCreditWarning && (
+        <div className="fixed bottom-4 right-4 max-w-sm bg-yellow-50 border border-yellow-200 rounded-lg p-4 shadow-lg z-50">
+          <div className="flex items-start gap-3">
+            <div className="w-5 h-5 bg-yellow-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+              <span className="text-yellow-600 text-xs">⚠️</span>
+            </div>
+            <div>
+              <p className="font-medium text-yellow-800 text-sm">Low on credits!</p>
+              <p className="text-yellow-700 text-xs mt-1">You have {config.credits} credits left. Upgrade to keep generating amazing images.</p>
+              <div className="flex gap-2 mt-3">
+                <button
+                  onClick={() => router.push('/#pricing')}
+                  className="px-3 py-1.5 bg-yellow-600 text-white text-xs rounded-lg hover:bg-yellow-700 transition-colors"
+                >
+                  Upgrade Now
+                </button>
+                <button
+                  onClick={() => setShowLowCreditWarning(false)}
+                  className="px-3 py-1.5 bg-yellow-100 text-yellow-800 text-xs rounded-lg hover:bg-yellow-200 transition-colors"
+                >
+                  Dismiss
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Zero Credit Modal */}
+      {showZeroCreditModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl p-6 max-w-md w-full">
+            <div className="text-center space-y-4">
+              <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto">
+                <span className="text-2xl">💳</span>
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">No credits left!</h3>
+                <p className="text-gray-600 text-sm mt-2">
+                  You've used all your free credits. Upgrade to a paid plan to continue creating amazing AI images with Flowt 2.0.
+                </p>
+              </div>
+              <div className="space-y-3 pt-2">
+                <button
+                  onClick={() => {
+                    setShowZeroCreditModal(false)
+                    router.push('/#pricing')
+                  }}
+                  className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white py-3 rounded-xl font-medium hover:shadow-lg transition-all"
+                >
+                  Upgrade to Continue
+                </button>
+                <button
+                  onClick={() => setShowZeroCreditModal(false)}
+                  className="w-full bg-gray-100 text-gray-700 py-3 rounded-xl font-medium hover:bg-gray-200 transition-colors"
+                >
+                  Maybe Later
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
