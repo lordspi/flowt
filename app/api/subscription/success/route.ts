@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
         await prisma.transaction.create({
           data: {
             userId: session.user.id,
-            amount: planId === 'BASIC' ? 20000 : planId === 'ENHANCED' ? 49000 : 99000, // Amount in paise (INR)
+            amount: planId === 'BASIC' ? 169000 : planId === 'ENHANCED' ? 414050 : 835550, // Exact USD to INR conversion at ₹84.50 per $1
             currency: 'inr',
             providerPaymentId: razorpay_payment_id,
             provider: 'RAZORPAY',
@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
             metadata: {
               planId,
               creditsAdded: creditsToAdd,
-              originalAmount: planId === 'BASIC' ? 200 : planId === 'ENHANCED' ? 490 : 990, // INR amounts
+              originalAmount: planId === 'BASIC' ? 1690 : planId === 'ENHANCED' ? 4140.50 : 8355.50, // Exact INR amounts from USD conversion
             },
           },
         })
