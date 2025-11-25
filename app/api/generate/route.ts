@@ -167,11 +167,16 @@ export async function POST(request: NextRequest) {
       try {
         // Use real AI generation without database
         console.log('Attempting real AI generation...')
+        console.log('Prompt:', prompt)
+        console.log('Config:', config)
+        
         const seedreamResult = await generateWithSeedream(prompt, config as GenerateConfig)
         console.log('AI generation successful:', seedreamResult)
-        images = seedreamResult.images
+        console.log('Number of images generated:', seeddreamResult.images.length)
+        images = seeddreamResult.images
       } catch (aiError) {
-        console.warn('AI generation failed, using demo images:', aiError)
+        console.error('AI generation failed, using demo images:', aiError)
+        console.error('Error details:', aiError instanceof Error ? aiError.stack : String(aiError))
         // Fall through to demo images
         images = [
           `https://picsum.photos/seed/${prompt.replace(/\s+/g, '-')}-1/512/512.jpg`,
@@ -181,6 +186,8 @@ export async function POST(request: NextRequest) {
       }
     } else {
       console.log('Using demo images - API keys not configured')
+      console.log('ARK_API_KEY exists:', !!process.env.ARK_API_KEY)
+      console.log('SEEDREAM_API_ENDPOINT exists:', !!process.env.SEEDREAM_API_ENDPOINT)
       // Demo images
       images = [
         `https://picsum.photos/seed/${prompt.replace(/\s+/g, '-')}-1/512/512.jpg`,
