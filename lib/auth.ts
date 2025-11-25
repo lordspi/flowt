@@ -1,9 +1,21 @@
 import NextAuth, { DefaultSession } from 'next-auth'
 import Google from 'next-auth/providers/google'
-import { PrismaAdapter } from '@auth/prisma-adapter'
-import { prisma } from './db'
 import type { NextAuthConfig, Session } from 'next-auth'
 import { JWT } from 'next-auth/jwt'
+
+// Conditional database adapter - only initialize if DATABASE_URL is available
+let PrismaAdapter: any = null
+let prisma: any = null
+
+if (process.env.DATABASE_URL) {
+  try {
+    const adapterModule = require('@auth/prisma-adapter')
+    PrismaAdapter = adapterModule.PrismaAdapter
+    prisma = require('./db').prisma
+  } catch (error) {
+    console.warn('Database adapter not available, falling back to JWT strategy')
+  }
+}
 
 declare module 'next-auth' {
   interface Session {
@@ -27,12 +39,15 @@ type JwtCallbackParams = {
 }
 
 export const authConfig = {
-  adapter: PrismaAdapter(prisma),
+  // Only use database adapter if DATABASE_URL is available
+  ...(PrismaAdapter && prisma ? { adapter: PrismaAdapter(prisma) } : {}),
   providers: [
-    Google({
-      clientId: process.env.GOOGLE_CLIENT_ID!,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-    }),
+    ...(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET ? [
+      Google({
+        clientId: process.env.GOOGLE_CLIENT_ID!,
+        clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      }),
+    ] : [])
   ],
   callbacks: {
     async session({ session, token }: SessionCallbackParams) {
@@ -41,35 +56,48 @@ export const authConfig = {
         ;(session.user as any).role = (token as any).role || 'user'
         ;(session.user as any).organizationId = (token as any).organizationId ?? null
         ;(session.user as any).currentPlan = (token as any).currentPlan || 'FREE'
-        ;(session.user as any).creditsBalance = (token as any).creditsBalance ?? 0
+        ;(session.user as any).creditsBalance = (token as any).creditsBalance ?? (PrismaAdapter ? 0 : 15)
       }
       return session
     },
     async jwt({ token }: JwtCallbackParams) {
       if (!token.sub) return token
 
-      const user = await prisma.user.findUnique({
-        where: { id: token.sub },
-        select: {
-          role: true,
-          organizationId: true,
-          currentPlan: true,
-          creditsBalance: true,
-        },
-      })
+      // Only lookup user in database if adapter is available
+      if (PrismaAdapter && prisma) {
+        try {
+          const user = await prisma.user.findUnique({
+            where: { id: token.sub },
+            select: {
+              role: true,
+              organizationId: true,
+              currentPlan: true,
+              creditsBalance: true,
+            },
+          })
 
-      if (user) {
-        ;(token as any).role = user.role
-        ;(token as any).organizationId = user.organizationId
-        ;(token as any).currentPlan = user.currentPlan
-        ;(token as any).creditsBalance = user.creditsBalance
+          if (user) {
+            ;(token as any).role = user.role
+            ;(token as any).organizationId = user.organizationId
+            ;(token as any).currentPlan = user.currentPlan
+            ;(token as any).creditsBalance = user.creditsBalance
+          }
+        } catch (error) {
+          console.warn('Database lookup failed, using defaults')
+        }
+      } else {
+        // Default values for demo mode
+        ;(token as any).role = 'user'
+        ;(token as any).organizationId = null
+        ;(token as any).currentPlan = 'FREE'
+        ;(token as any).creditsBalance = 15
       }
 
       return token
     },
   },
   session: {
-    strategy: 'database',
+    strategy: PrismaAdapter ? 'database' : 'jwt',
   },
 } satisfies NextAuthConfig
 
