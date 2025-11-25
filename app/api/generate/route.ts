@@ -173,7 +173,8 @@ export async function POST(request: NextRequest) {
         const seeddreamResult = await generateWithSeedream(prompt, config as GenerateConfig)
         console.log('AI generation successful:', seeddreamResult)
         console.log('Number of images generated:', seeddreamResult.images.length)
-        images = seeddreamResult.images      } catch (aiError) {
+        images = seeddreamResult.images
+      } catch (aiError) {
         console.error('AI generation failed, using demo images:', aiError)
         console.error('Error details:', aiError instanceof Error ? aiError.stack : String(aiError))
         // Fall through to demo images
