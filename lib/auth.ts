@@ -49,6 +49,9 @@ export const authConfig = {
       }),
     ] : [])
   ],
+  pages: {
+    signIn: '/signin',
+  },
   callbacks: {
     async session({ session, token }: SessionCallbackParams) {
       if (session.user && token.sub) {
@@ -60,13 +63,42 @@ export const authConfig = {
       }
       return session
     },
-    async jwt({ token }: JwtCallbackParams) {
+    async jwt({ token, user, account }: JwtCallbackParams & { user?: any; account?: any }) {
       if (!token.sub) return token
 
       // Only lookup user in database if adapter is available
       if (PrismaAdapter && prisma) {
         try {
-          const user = await prisma.user.findUnique({
+          // Check if this is a new user (first time sign-in)
+          if (user && account?.provider === 'google') {
+            const existingUser = await prisma.user.findUnique({
+              where: { id: user.id },
+              select: { id: true }
+            })
+
+            if (!existingUser) {
+              // Create new user with 15 free credits
+              await prisma.user.create({
+                data: {
+                  id: user.id,
+                  email: user.email,
+                  name: user.name,
+                  image: user.image,
+                  role: 'user',
+                  currentPlan: 'FREE',
+                  creditsBalance: 15,
+                }
+              })
+
+              // Set token values for new user
+              ;(token as any).role = 'user'
+              ;(token as any).organizationId = null
+              ;(token as any).currentPlan = 'FREE'
+              ;(token as any).creditsBalance = 15
+            }
+          }
+
+          const dbUser = await prisma.user.findUnique({
             where: { id: token.sub },
             select: {
               role: true,
@@ -76,14 +108,14 @@ export const authConfig = {
             },
           })
 
-          if (user) {
-            ;(token as any).role = user.role
-            ;(token as any).organizationId = user.organizationId
-            ;(token as any).currentPlan = user.currentPlan
-            ;(token as any).creditsBalance = user.creditsBalance
+          if (dbUser) {
+            ;(token as any).role = dbUser.role
+            ;(token as any).organizationId = dbUser.organizationId
+            ;(token as any).currentPlan = dbUser.currentPlan
+            ;(token as any).creditsBalance = dbUser.creditsBalance
           }
         } catch (error) {
-          console.warn('Database lookup failed, using defaults')
+          console.warn('Database lookup failed, using defaults:', error)
         }
       } else {
         // Default values for demo mode

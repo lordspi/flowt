@@ -25,8 +25,8 @@ export default function GeneratePage() {
       try {
         const res = await fetch('/api/user/me')
         if (res.status === 401) {
-          // Redirect to sign in for unauthorized users
-          router.push('/api/auth/signin')
+          // Redirect to custom sign-in page for unauthorized users
+          router.push('/signin')
           return
         }
         if (!res.ok) {
@@ -38,7 +38,7 @@ export default function GeneratePage() {
         }
       } catch (error) {
         console.error('Error loading user:', error)
-        if (!cancelled) router.push('/api/auth/signin')
+        if (!cancelled) router.push('/signin')
       } finally {
         if (!cancelled) setIsLoadingUser(false)
       }
