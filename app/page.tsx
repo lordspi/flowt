@@ -160,10 +160,10 @@ export default function Home() {
   const [logoSlideIndex, setLogoSlideIndex] = useState(0)
   const [config, setConfig] = useState({
     mode: 'Auto mode',
-    resolution: '4K',
+    resolution: '2K',
     ratio: '1:1',
     count: 15,
-    credits: 198,
+    credits: 15,
   })
   const [activeCapability, setActiveCapability] = useState(capabilityTabs[0].id)
   const [showPricingNudge, setShowPricingNudge] = useState(false)
@@ -1010,6 +1010,13 @@ export default function Home() {
               <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
                 {[
                   {
+                    id: 'FREE',
+                    name: 'Free',
+                    description: '15 AI images to start creating amazing content today.',
+                    price: 0,
+                    credits: 15,
+                  },
+                  {
                     id: 'BASIC',
                     name: 'Basic',
                     description: '120 Ultra HD images per month for early-stage testing and lean teams.',
@@ -1031,13 +1038,6 @@ export default function Home() {
                     credits: 1100,
                     popular: true,
                   },
-                  {
-                    id: 'DEDICATED',
-                    name: 'Dedicated',
-                    description: 'Custom enterprise workspace with team access, SLAs and an account manager.',
-                    price: null,
-                    credits: 0,
-                  },
                 ].map((plan) => (
                   <div
                     key={plan.id}
@@ -1056,8 +1056,12 @@ export default function Home() {
                     {plan.price !== null ? (
                       <div className="mb-5 space-y-1 text-sm">
                         <div className="flex items-baseline gap-1">
-                          <span className="text-2xl font-semibold tracking-tight text-gray-900">${plan.price}</span>
-                          <span className="text-xs text-gray-500">USD / month</span>
+                          <span className="text-2xl font-semibold tracking-tight text-gray-900">
+                            {plan.price === 0 ? 'Free' : `$${plan.price}`}
+                          </span>
+                          <span className="text-xs text-gray-500">
+                            {plan.price === 0 ? 'forever' : 'USD / month'}
+                          </span>
                         </div>
                       </div>
                     ) : (
@@ -1074,11 +1078,12 @@ export default function Home() {
                     </div>
 
                     <div className="mt-auto pt-2">
-                      {plan.id === 'DEDICATED' ? (
+                      {plan.id === 'FREE' ? (
                         <button
-                          className="w-full rounded-full border border-gray-200 bg-gray-50 py-2.5 text-sm font-medium text-gray-900 hover:bg-gray-100 transition-colors"
+                          onClick={() => router.push('/generate')}
+                          className="w-full rounded-full bg-purple-600 text-white py-2.5 text-sm font-medium hover:bg-purple-700 transition-colors"
                         >
-                          Talk to sales
+                          Start generating for free
                         </button>
                       ) : (
                         <button
