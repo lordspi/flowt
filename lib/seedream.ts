@@ -24,38 +24,70 @@ export async function generateWithSeedream(prompt: string, config: SeedreamConfi
     throw new Error('Seedream API is not configured')
   }
 
-  const body = {
-    prompt,
-    // TODO: map these fields exactly to Seedream 4.0 API once spec is finalized
-    resolution: config.resolution,
-    ratio: config.ratio,
-    count: config.count,
-    mode: config.mode,
+  // Map resolution to size
+  const sizeMap: { [key: string]: string } = {
+    '2K': '2K',
+    '4K': '4K',
+    '512x512': '512x512',
+    '1024x1024': '1024x1024',
   }
+
+  const body = {
+    model: 'seedream-4-0-250828',
+    prompt,
+    sequential_image_generation: 'disabled',
+    response_format: 'url',
+    size: sizeMap[config.resolution] || '2K',
+    stream: false,
+    watermark: false,
+  }
+
+  console.log('Calling Seedream API:', { apiEndpoint, body })
 
   const response = await fetch(apiEndpoint, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${apiKey}`,
+      'Authorization': `Bearer ${apiKey}`,
     },
     body: JSON.stringify(body),
   })
 
   if (!response.ok) {
     const text = await response.text().catch(() => '')
+    console.error('Seedream API error:', response.status, text)
     throw new Error(`Seedream request failed: ${response.status} ${text}`)
   }
 
   const data = await response.json()
+  console.log('Seedream API response:', data)
 
-  // This extraction depends on Seedream's response format; adapt as needed.
-  const images: SeedreamImage[] = (data.images || []).map((img: any) => ({
-    url: typeof img === 'string' ? img : img.url,
-    width: img.width,
-    height: img.height,
-    format: img.format,
-  }))
+  // Handle the response format based on the actual API response
+  let images: SeedreamImage[] = []
+
+  if (data.images && Array.isArray(data.images)) {
+    // If API returns images array
+    images = data.images.map((img: any) => ({
+      url: typeof img === 'string' ? img : img.url,
+      width: img.width,
+      height: img.height,
+      format: img.format,
+    }))
+  } else if (data.image) {
+    // If API returns single image
+    images = [{
+      url: typeof data.image === 'string' ? data.image : data.image.url,
+      width: data.image.width,
+      height: data.image.height,
+      format: data.image.format,
+    }]
+  } else if (data.url) {
+    // If API returns direct URL
+    images = [{ url: data.url }]
+  } else {
+    console.error('Unexpected Seedream response format:', data)
+    throw new Error('Invalid response format from Seedream API')
+  }
 
   return { images }
 }
