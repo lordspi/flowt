@@ -74,8 +74,8 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Debug API error:', error)
     return NextResponse.json({ 
-      error: error.message,
-      stack: error.stack
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : 'No stack trace'
     }, { status: 500 })
   }
 }
