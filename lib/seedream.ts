@@ -63,9 +63,12 @@ export async function generateWithSeedream(prompt: string, config: SeedreamConfi
     body.sequential_image_generation_options = config.sequentialImageGenerationOptions
   }
 
-  // Handle multiple aspect ratios
+  // Handle aspect ratios - use multiple if selected, otherwise use single ratio
   if (config.aspectRatios && config.aspectRatios.length > 0) {
     body.aspect_ratios = config.aspectRatios
+  } else if (config.ratio) {
+    // Convert single ratio to aspect_ratios format for consistency
+    body.aspect_ratios = [config.ratio]
   }
 
   // Handle multiple formats
@@ -75,7 +78,20 @@ export async function generateWithSeedream(prompt: string, config: SeedreamConfi
 
   // Add optional parameters if provided
   if (config.image) {
-    body.image = config.image
+    // Handle image-to-image generation
+    if (Array.isArray(config.image)) {
+      // Multiple images
+      body.image = config.image.map(img => {
+        // Convert base64 to data URL format if needed
+        if (img.startsWith('data:')) {
+          return img
+        }
+        return img
+      })
+    } else {
+      // Single image
+      body.image = config.image.startsWith('data:') ? config.image : config.image
+    }
   }
 
   if (config.seed !== undefined) {

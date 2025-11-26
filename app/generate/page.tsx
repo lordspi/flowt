@@ -22,7 +22,63 @@ export default function GeneratePage() {
     sequentialGeneration: false,
     formats: ['jpg']
   })
+  const [uploadedImages, setUploadedImages] = useState<string[]>([])
   const [isLoadingUser, setIsLoadingUser] = useState(true)
+  const fileInputRef = useRef<HTMLInputElement | null>(null)
+
+  // Handle image upload
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files
+    if (!files) return
+
+    Array.from(files).forEach((file) => {
+      if (file.type.startsWith('image/')) {
+        const reader = new FileReader()
+        reader.onload = (event) => {
+          if (event.target?.result) {
+            setUploadedImages(prev => [...prev, event.target.result as string])
+          }
+        }
+        reader.readAsDataURL(file)
+      }
+    })
+  }
+
+  // Remove uploaded image
+  const removeUploadedImage = (index: number) => {
+    setUploadedImages(prev => prev.filter((_, i) => i !== index))
+  }
+
+  // Download image
+  const downloadImage = async (imageUrl: string, prompt: string, index: number = 0) => {
+    try {
+      // Fetch the image
+      const response = await fetch(imageUrl)
+      const blob = await response.blob()
+      
+      // Create download link
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      
+      // Generate filename from prompt
+      const cleanPrompt = prompt.replace(/[^a-z0-9]/gi, '_').toLowerCase()
+      const timestamp = new Date().toISOString().slice(0, 19).replace(/[:-]/g, '')
+      const filename = `${cleanPrompt}_${timestamp}_${index + 1}.jpg`
+      
+      link.download = filename
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      
+      // Clean up
+      window.URL.revokeObjectURL(url)
+    } catch (error) {
+      console.error('Download failed:', error)
+      // Fallback: open image in new tab
+      window.open(imageUrl, '_blank')
+    }
+  }
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement | null>(null)
 
@@ -142,7 +198,8 @@ export default function GeneratePage() {
             sequentialImageGeneration: config.sequentialGeneration ? 'auto' : 'disabled',
             sequentialImageGenerationOptions: config.sequentialGeneration ? { max_images: config.count } : undefined,
             formats: config.formats,
-            stream: config.sequentialGeneration
+            stream: config.sequentialGeneration,
+            image: uploadedImages.length > 0 ? uploadedImages : undefined
           },
         }),
       })
@@ -325,7 +382,11 @@ export default function GeneratePage() {
                             }} 
                           />
                           <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                            <button className="p-2 bg-white rounded-full hover:scale-110 transition-transform">
+                            <button 
+                              onClick={() => downloadImage(img, msg.prompt, idx)}
+                              className="p-2 bg-white rounded-full hover:scale-110 transition-transform"
+                              title="Download image"
+                            >
                               <Download className="w-4 h-4" />
                             </button>
                             <button className="p-2 bg-white rounded-full hover:scale-110 transition-transform">
@@ -347,7 +408,11 @@ export default function GeneratePage() {
                             className="w-full h-full object-cover" 
                           />
                           <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                            <button className="p-2 bg-white rounded-full hover:scale-110 transition-transform">
+                            <button 
+                              onClick={() => downloadImage(`https://picsum.photos/seed/${msg.prompt?.replace(/\s+/g, '-')}-${idx}/512/512.jpg`, msg.prompt, idx)}
+                              className="p-2 bg-white rounded-full hover:scale-110 transition-transform"
+                              title="Download image"
+                            >
                               <Download className="w-4 h-4" />
                             </button>
                             <button className="p-2 bg-white rounded-full hover:scale-110 transition-transform">
@@ -403,8 +468,54 @@ export default function GeneratePage() {
                     disabled={isGenerating}
                   />
                 </div>
+
+                {/* Uploaded Images Display */}
+                {uploadedImages.length > 0 && (
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {uploadedImages.map((img, index) => (
+                      <div key={index} className="relative group">
+                        <img 
+                          src={img} 
+                          alt={`Upload ${index + 1}`}
+                          className="w-16 h-16 object-cover rounded-lg border border-gray-200"
+                        />
+                        <button
+                          onClick={() => removeUploadedImage(index)}
+                          className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-xs"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
+
+            {/* Image Upload Button */}
+            <div className="mt-2.5 flex items-center gap-2">
+              <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                accept="image/*"
+                onChange={handleImageUpload}
+                className="hidden"
+              />
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="flex items-center gap-2 px-3 py-1.5 border border-gray-200 rounded-xl bg-gray-50 text-xs md:text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+              >
+                <Upload className="w-4 h-4" />
+                Upload Reference Images
+              </button>
+              {uploadedImages.length > 0 && (
+                <span className="text-xs text-gray-500">
+                  {uploadedImages.length} image{uploadedImages.length > 1 ? 's' : ''} uploaded
+                </span>
+              )}
+            </div>
+
             <div className="mt-2.5 flex flex-wrap gap-2 md:gap-3 items-center text-xs md:text-sm">
               <div className="px-3 py-1.5 border border-gray-200 rounded-xl bg-gray-50 text-xs md:text-sm text-gray-700 flex items-center gap-2 select-none">
                 <span className="text-[10px] md:text-xs px-2 py-0.5 rounded-full bg-gray-200 text-gray-700">Auto</span>
