@@ -13,14 +13,14 @@ export default function GeneratePage() {
   const [isGenerating, setIsGenerating] = useState(false)
   const [showConfig, setShowConfig] = useState(false)
   const [config, setConfig] = useState({ 
-    mode: 'text-to-image', 
-    resolution: '2K', 
-    ratio: '1:1', 
+    mode: 'text-to-image' as const, 
+    resolution: '2K' as const, 
+    ratio: '1:1' as const, 
     count: 15, 
     credits: 0,
-    aspectRatios: [],
+    aspectRatios: [] as string[],
     sequentialGeneration: false,
-    formats: ['jpg']
+    formats: ['jpg'] as string[]
   })
   const [uploadedImages, setUploadedImages] = useState<string[]>([])
   const [isLoadingUser, setIsLoadingUser] = useState(true)
