@@ -198,6 +198,7 @@ export default function GeneratePage() {
             resolution: config.resolution,
             ratio: config.ratio,
             count: config.count,
+            credits: config.credits,
             sequentialImageGeneration: config.sequentialGeneration ? 'auto' : 'disabled',
             sequentialImageGenerationOptions: config.sequentialGeneration ? { max_images: config.count } : undefined,
             formats: config.formats,
