@@ -43,14 +43,14 @@ export async function generateWithSeedream(prompt: string, config: SeedreamConfi
     'adaptive': 'adaptive',
   }
 
-  // Build request body based on available features
+  // Build request body based on working sample format
   const body: any = {
     model: config.model || 'seedream-4-0-250828',
     prompt,
     response_format: 'url',
     size: sizeMap[config.resolution] || '2K',
     stream: config.stream || false,
-    watermark: false, // Set to false for cleaner images
+    watermark: true, // Use watermark=true like the working sample
     sequential_image_generation: config.sequentialImageGeneration || 'disabled',
   }
 

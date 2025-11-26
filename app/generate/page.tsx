@@ -117,7 +117,7 @@ export default function GeneratePage() {
     setIsGenerating(true)
 
     try {
-      const response = await fetch('/api/generate', {
+      const response = await fetch('/api/generate-bypass', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
