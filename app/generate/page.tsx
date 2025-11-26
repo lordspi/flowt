@@ -563,7 +563,7 @@ export default function GeneratePage() {
 
                 {/* Aspect ratio */}
                 <div className="mb-5">
-                  <div className="mb-2 text-xs font-medium text-gray-500">Aspect Ratio (Seedream 4.0)</div>
+                  <div className="mb-2 text-xs font-medium text-gray-500">Aspect Ratio (Flowt-2.0)</div>
                   <div className="grid grid-cols-3 gap-2">
                     {['1:1', '16:9', '9:16', '4:3', '3:4', '21:9'].map((ratio) => (
                       <button
