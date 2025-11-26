@@ -14,7 +14,7 @@ export default function GeneratePage() {
   const [showConfig, setShowConfig] = useState(false)
   const [config, setConfig] = useState({ 
     mode: 'text-to-image' as const, 
-    resolution: '2K' as const, 
+    resolution: '2K' as '2K' | '4K', 
     ratio: '1:1' as const, 
     count: 15, 
     credits: 0,
@@ -36,7 +36,7 @@ export default function GeneratePage() {
         const reader = new FileReader()
         reader.onload = (event) => {
           if (event.target?.result) {
-            setUploadedImages(prev => [...prev, event.target.result as string])
+            setUploadedImages(prev => [...prev, event.target!.result as string])
           }
         }
         reader.readAsDataURL(file)
@@ -226,10 +226,18 @@ export default function GeneratePage() {
             : msg,
         ),
       )
+      // Update credits based on actual images generated
+      const actualImageCount = data.images?.length || 0
       if (typeof data.remainingCredits === 'number') {
         setConfig((prev) => ({ ...prev, credits: data.remainingCredits }))
       } else {
-        setConfig((prev) => ({ ...prev, credits: Math.max(0, prev.credits - (data.config?.count ?? newMessage.count)) }))
+        // Deduct credits for actual images generated
+        setConfig((prev) => ({ ...prev, credits: Math.max(0, prev.credits - actualImageCount) }))
+      }
+      
+      // Show credit usage info
+      if (actualImageCount < newMessage.count) {
+        console.log(`Generated ${actualImageCount} images instead of ${newMessage.count} - credits adjusted accordingly`)
       }
     } catch (error) {
       setMessages((prev) =>
@@ -265,109 +273,131 @@ export default function GeneratePage() {
             <ArrowLeft className="w-5 h-5" />
           </button>
           <div className="flex items-center gap-2">
-            <span className="font-semibold text-sm md:text-base">Flowt Ad Studio 2.0</span>
+            <span className="text-xl font-bold text-gray-900">Generate</span>
+            <span className="px-2 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-medium">AI</span>
           </div>
         </div>
-        <div className="flex items-center gap-3">
-          <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-100 text-xs text-gray-700">
-            <span className="w-2 h-2 rounded-full bg-purple-500" />
-            <span>{config.credits} credits</span>
-          </div>
-          
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-gray-600">{config.credits} credits</span>
           {/* Upgrade button - show when credits are low */}
-          {(config.credits <= 5 || config.credits === 0) && (
+          {config.credits <= 5 && config.credits > 0 && (
             <button
               onClick={() => router.push('/#pricing')}
-              className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-gradient-to-r from-purple-500 to-blue-500 text-white text-xs font-medium shadow-sm hover:shadow-md transition-shadow"
+              className="px-3 py-1.5 bg-gradient-to-r from-purple-600 to-blue-600 text-white text-xs rounded-lg hover:shadow-lg transition-all"
             >
-              <span>⚡ Upgrade</span>
+              Upgrade
             </button>
           )}
-          
           <button
             onClick={() => router.push('/gallery')}
-            className="flex items-center gap-2 px-3 py-2 hover:bg-gray-100 rounded-lg transition-colors text-sm"
+            className="px-3 py-1.5 border border-gray-200 rounded-xl text-xs text-gray-700 hover:border-purple-300 hover:bg-purple-50 transition-colors"
           >
-            <Grid3x3 className="w-4 h-4" />
-            <span className="hidden md:inline">Gallery</span>
+            Gallery
           </button>
           <button
             onClick={() => setShowConfig(true)}
-            className="flex items-center justify-center w-9 h-9 rounded-full border border-gray-200 hover:bg-gray-100 transition-colors"
-            aria-label="Open configuration"
+            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
           >
-            <Settings className="w-5 h-5 text-gray-700" />
+            <Settings className="w-5 h-5" />
           </button>
-          <div className="hidden md:inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-gradient-to-r from-purple-500 to-blue-500 text-white text-xs font-medium shadow-sm">
-            <span className="w-2 h-2 rounded-full bg-white/80" />
-            <span>Dashboard</span>
-          </div>
         </div>
       </header>
 
       {/* MESSAGES AREA */}
-      <div className="flex-1 overflow-y-auto px-3 md:px-6 py-4">
-        <div className="max-w-5xl mx-auto space-y-6">
-        {messages.length === 0 ? (
-          <div className="h-full flex flex-col items-center justify-center text-gray-400 pt-10">
-            <div className="w-16 h-16 mb-4 opacity-50">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
+      <div className="flex-1 overflow-y-auto">
+        <div className="max-w-4xl mx-auto px-4 py-6">
+          {messages.length === 0 ? (
+            <div className="h-full flex flex-col items-center justify-center text-gray-400 pt-10">
+              <div className="w-16 h-16 mb-4 opacity-50">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <p className="text-lg">Experience image generation. Let the creativity shake</p>
             </div>
-            <p className="text-lg">Experience image generation. Let the creativity shake</p>
-          </div>
-        ) : (
-          messages.map((msg) => (
-            <motion.div
-              key={msg.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="space-y-3"
-            >
-              <div className="flex items-center gap-3 text-[11px] text-gray-500 pl-1">
-                <span>{msg.timestamp}</span>
-                <span className="px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-600">{msg.model}</span>
-              </div>
-
-              <div className="bg-white rounded-2xl p-4 md:p-5 shadow-sm border border-gray-100">
-                <p className="text-gray-900 text-sm md:text-base mb-3">{msg.prompt}</p>
-                <div className="flex flex-wrap gap-2 text-[11px]">
-                  <span className="px-2 py-1 bg-blue-50 text-blue-700 rounded">{msg.ratio}</span>
-                  <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded">{msg.resolution}</span>
-                  <span className="px-2 py-1 bg-purple-50 text-purple-700 rounded">{msg.mode}</span>
-                  <span className="px-2 py-1 bg-green-50 text-green-700 rounded">{msg.model}</span>
+          ) : (
+            messages.map((msg) => (
+              <motion.div
+                key={msg.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="space-y-3"
+              >
+                <div className="flex items-center gap-2 text-xs text-gray-500">
+                  <span>{msg.timestamp}</span>
+                  <span className="px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-600">{msg.model}</span>
                 </div>
-              </div>
-
-              {msg.status === 'generating' ? (
-                <div className="bg-white rounded-2xl p-4 md:p-5 shadow-sm border border-gray-100">
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
-                    {Array.from({ length: msg.count || 0 }).map((_, i) => (
-                      <div
-                        key={i}
-                        className="relative aspect-square rounded-xl overflow-hidden bg-gray-100"
-                      >
-                        <div className="absolute inset-0 bg-gradient-to-r from-gray-100 via-gray-200 to-gray-100 animate-pulse" />
+                
+                {msg.status === 'generating' ? (
+                  <div className="bg-white rounded-2xl p-4 md:p-5 shadow-sm border border-gray-100">
+                    <p className="text-gray-900 text-sm md:text-base mb-3">{msg.prompt}</p>
+                    <div className="flex flex-wrap gap-2 mb-4">
+                      <span className="px-2 py-1 bg-blue-50 text-blue-700 rounded">{msg.ratio}</span>
+                      <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded">{msg.resolution}</span>
+                      <span className="px-2 py-1 bg-purple-50 text-purple-700 rounded">{msg.mode}</span>
+                      <span className="px-2 py-1 bg-green-50 text-green-700 rounded">{msg.model}</span>
+                    </div>
+                    
+                    {/* Generation Animation */}
+                    <div className="flex flex-col items-center justify-center py-8">
+                      <div className="relative mb-6">
+                        <div className="w-16 h-16 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full animate-pulse"></div>
+                        <div className="absolute inset-0 w-16 h-16 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full animate-ping"></div>
+                        <div className="absolute inset-2 w-12 h-12 bg-white rounded-full flex items-center justify-center">
+                          <div className="w-6 h-6 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full animate-spin"></div>
+                        </div>
                       </div>
-                    ))}
+                      
+                      <div className="text-center space-y-2">
+                        <h3 className="text-lg font-semibold text-gray-900">Generating with Seedream 4.0</h3>
+                        <p className="text-sm text-gray-600">Creating {msg.count} {msg.count === 1 ? 'image' : 'images'} with AI magic...</p>
+                        
+                        {/* Progress bars */}
+                        <div className="w-full max-w-xs mx-auto space-y-2">
+                          <div className="flex justify-between text-xs text-gray-500">
+                            <span>Processing prompt</span>
+                            <span>✓</span>
+                          </div>
+                          <div className="w-full bg-gray-200 rounded-full h-1">
+                            <div className="bg-purple-500 h-1 rounded-full w-full"></div>
+                          </div>
+                          
+                          <div className="flex justify-between text-xs text-gray-500">
+                            <span>Generating images</span>
+                            <span className="animate-pulse">...</span>
+                          </div>
+                          <div className="w-full bg-gray-200 rounded-full h-1">
+                            <div className="bg-gradient-to-r from-purple-500 to-blue-500 h-1 rounded-full animate-pulse w-3/4"></div>
+                          </div>
+                          
+                          <div className="flex justify-between text-xs text-gray-500">
+                            <span>Applying final touches</span>
+                            <span className="text-gray-400">...</span>
+                          </div>
+                          <div className="w-full bg-gray-200 rounded-full h-1">
+                            <div className="bg-gray-300 h-1 rounded-full w-1/4"></div>
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-center gap-2 text-xs text-gray-500 mt-4">
+                          <span className="w-2 h-2 rounded-full bg-purple-500 animate-pulse"></span>
+                          <span>Powered by BytePlus Seedream 4.0</span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                  <div className="mt-4 flex items-center justify-between text-xs md:text-sm text-gray-500">
-                    <span>
-                      Generating {msg.count}{' '}
-                      {msg.count === 1 ? 'image' : 'images'}…
-                    </span>
-                    <span className="flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full bg-purple-500 animate-pulse" />
-                      Using Flowt 2.0
-                    </span>
-                  </div>
-                </div>
-              ) : (
-                <div className="bg-white rounded-2xl p-4 md:p-5 shadow-sm border border-gray-100">
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-4">
-                    {msg.images.length > 0 ? (
-                      msg.images.map((img: string, idx: number) => (
+                ) : (
+                  <div className="bg-white rounded-2xl p-4 md:p-5 shadow-sm border border-gray-100">
+                    <p className="text-gray-900 text-sm md:text-base mb-3">{msg.prompt}</p>
+                    <div className="flex flex-wrap gap-2 mb-4">
+                      <span className="px-2 py-1 bg-blue-50 text-blue-700 rounded">{msg.ratio}</span>
+                      <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded">{msg.resolution}</span>
+                      <span className="px-2 py-1 bg-purple-50 text-purple-700 rounded">{msg.mode}</span>
+                      <span className="px-2 py-1 bg-green-50 text-green-700 rounded">{msg.model}</span>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-4">
+                      {msg.images.map((img: string, idx: number) => (
                         <div
                           key={idx}
                           className="relative group aspect-square rounded-xl overflow-hidden bg-gray-100"
@@ -378,7 +408,8 @@ export default function GeneratePage() {
                             className="w-full h-full object-cover" 
                             onError={(e) => { 
                               console.log('Image failed to load:', img)
-                              e.currentTarget.src = `https://picsum.photos/seed/${msg.prompt?.replace(/\s+/g, '-')}-${idx}/512/512.jpg` 
+                              // Show a placeholder if image fails to load
+                              e.currentTarget.src = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='512' height='512'%3E%3Crect width='512' height='512' fill='%23f3f4f6'/%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dy='.3em' fill='%239ca3af' font-family='sans-serif' font-size='14'%3EImage failed to load%3C/text%3E%3C/svg%3E`
                             }} 
                           />
                           <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
@@ -394,48 +425,21 @@ export default function GeneratePage() {
                             </button>
                           </div>
                         </div>
-                      ))
-                    ) : (
-                      // Fallback demo images
-                      Array.from({ length: msg.count || 1 }, (_, idx) => (
-                        <div
-                          key={idx}
-                          className="relative group aspect-square rounded-xl overflow-hidden bg-gray-100"
-                        >
-                          <img 
-                            src={`https://picsum.photos/seed/${msg.prompt?.replace(/\s+/g, '-')}-${idx}/512/512.jpg`} 
-                            alt={`Generated ${idx + 1}`} 
-                            className="w-full h-full object-cover" 
-                          />
-                          <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                            <button 
-                              onClick={() => downloadImage(`https://picsum.photos/seed/${msg.prompt?.replace(/\s+/g, '-')}-${idx}/512/512.jpg`, msg.prompt, idx)}
-                              className="p-2 bg-white rounded-full hover:scale-110 transition-transform"
-                              title="Download image"
-                            >
-                              <Download className="w-4 h-4" />
-                            </button>
-                            <button className="p-2 bg-white rounded-full hover:scale-110 transition-transform">
-                              <Share2 className="w-4 h-4" />
-                            </button>
-                          </div>
-                        </div>
-                      ))
-                    )}
+                      ))}
+                    </div>
+                    <button
+                      onClick={() => handleReEdit(msg.prompt)}
+                      className="flex items-center gap-2 px-4 py-2 text-xs md:text-sm text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
+                    >
+                      <RefreshCw className="w-4 h-4" />
+                      re-edit
+                    </button>
                   </div>
-                  <button
-                    onClick={() => handleReEdit(msg.prompt)}
-                    className="flex items-center gap-2 px-4 py-2 text-xs md:text-sm text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
-                  >
-                    <RefreshCw className="w-4 h-4" />
-                    re-edit
-                  </button>
-                </div>
-              )}
-            </motion.div>
-          ))
-        )}
-        <div ref={messagesEndRef} />
+                )}
+              </motion.div>
+            ))
+          )}
+          <div ref={messagesEndRef} />
         </div>
       </div>
 
@@ -542,26 +546,12 @@ export default function GeneratePage() {
               <button
                 onClick={() => handleGenerate()}
                 disabled={!prompt.trim() || isGenerating}
-                className="ml-auto w-8 h-8 md:w-9 md:h-9 rounded-full bg-purple-500 text-white flex items-center justify-center shadow-md hover:bg-purple-600 hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-4 py-1.5 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl font-medium hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
               >
-                <svg
-                  className="w-4 h-4 md:w-5 md:h-5"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M5 10l7-7m0 0l7 7m-7-7v18"
-                  />
-                </svg>
+                <Send className="w-4 h-4" />
+                Generate
               </button>
             </div>
-          </div>
-          <div className="mt-3 text-xs text-center text-gray-500">
-            Flowt Ad Studio 2.0 is your AI ad creative partner generate scroll-stopping campaigns in seconds and iterate faster than ever.
           </div>
         </div>
       </div>
@@ -597,7 +587,7 @@ export default function GeneratePage() {
                     {['2K', '4K'].map((res) => (
                       <button
                         key={res}
-                        onClick={() => setConfig({ ...config, resolution: res })}
+                        onClick={() => setConfig({ ...config, resolution: res as '2K' | '4K' })}
                         className={`px-4 py-1.5 text-xs rounded-lg border transition-all ${
                           config.resolution === res
                             ? 'border-purple-500 bg-white text-purple-600 shadow-sm'
@@ -612,12 +602,12 @@ export default function GeneratePage() {
 
                 {/* Aspect ratio */}
                 <div className="mb-5">
-                  <div className="mb-2 text-xs font-medium text-gray-500">Aspect ratio</div>
-                  <div className="grid grid-cols-4 gap-2">
-                    {['1:1', '3:4', '4:3', '16:9', '9:16', '2:3', '3:2', '21:9'].map((ratio) => (
+                  <div className="mb-2 text-xs font-medium text-gray-500">Aspect Ratio (Seedream 4.0)</div>
+                  <div className="grid grid-cols-3 gap-2">
+                    {['1:1', '16:9', '9:16', '4:3', '3:4', '21:9'].map((ratio) => (
                       <button
                         key={ratio}
-                        onClick={() => setConfig({ ...config, ratio })}
+                        onClick={() => setConfig({ ...config, ratio: ratio as any })}
                         className={`py-1.5 text-xs rounded-lg border transition-all ${
                           config.ratio === ratio
                             ? 'border-purple-500 bg-white text-purple-600 shadow-sm'
@@ -629,6 +619,7 @@ export default function GeneratePage() {
                     ))}
                   </div>
                 </div>
+                
                 {/* Maximum images per generation */}
                 <div className="mb-5">
                   <div className="mb-2 text-xs font-medium text-gray-500">
@@ -680,7 +671,7 @@ export default function GeneratePage() {
                 <div className="mb-5">
                   <div className="mb-2 text-xs font-medium text-gray-500">Multiple Aspect Ratios</div>
                   <div className="space-y-2">
-                    {['1:1', '16:9', '9:16', '4:3'].map((ratio) => (
+                    {['1:1', '16:9', '9:16', '4:3', '3:4'].map((ratio) => (
                       <label key={ratio} className="flex items-center gap-2 text-xs">
                         <input
                           type="checkbox"
@@ -727,71 +718,6 @@ export default function GeneratePage() {
           </>
         )}
       </AnimatePresence>
-
-      {/* Low Credit Warning */}
-      {showLowCreditWarning && (
-        <div className="fixed bottom-4 right-4 max-w-sm bg-yellow-50 border border-yellow-200 rounded-lg p-4 shadow-lg z-50">
-          <div className="flex items-start gap-3">
-            <div className="w-5 h-5 bg-yellow-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-              <span className="text-yellow-600 text-xs">⚠️</span>
-            </div>
-            <div>
-              <p className="font-medium text-yellow-800 text-sm">Low on credits!</p>
-              <p className="text-yellow-700 text-xs mt-1">You have {config.credits} credits left. Upgrade to keep generating amazing images.</p>
-              <div className="flex gap-2 mt-3">
-                <button
-                  onClick={() => router.push('/#pricing')}
-                  className="px-3 py-1.5 bg-yellow-600 text-white text-xs rounded-lg hover:bg-yellow-700 transition-colors"
-                >
-                  Upgrade Now
-                </button>
-                <button
-                  onClick={() => setShowLowCreditWarning(false)}
-                  className="px-3 py-1.5 bg-yellow-100 text-yellow-800 text-xs rounded-lg hover:bg-yellow-200 transition-colors"
-                >
-                  Dismiss
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Zero Credit Modal */}
-      {showZeroCreditModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl p-6 max-w-md w-full">
-            <div className="text-center space-y-4">
-              <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto">
-                <span className="text-2xl">💳</span>
-              </div>
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900">No credits left!</h3>
-                <p className="text-gray-600 text-sm mt-2">
-                  You've used all your free credits. Upgrade to a paid plan to continue creating amazing AI images with Flowt 2.0.
-                </p>
-              </div>
-              <div className="space-y-3 pt-2">
-                <button
-                  onClick={() => {
-                    setShowZeroCreditModal(false)
-                    router.push('/#pricing')
-                  }}
-                  className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white py-3 rounded-xl font-medium hover:shadow-lg transition-all"
-                >
-                  Upgrade to Continue
-                </button>
-                <button
-                  onClick={() => setShowZeroCreditModal(false)}
-                  className="w-full bg-gray-100 text-gray-700 py-3 rounded-xl font-medium hover:bg-gray-200 transition-colors"
-                >
-                  Maybe Later
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   )
 }

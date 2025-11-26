@@ -102,6 +102,12 @@ export async function POST(request: NextRequest) {
         console.log('Seedream result received, images count:', seedreamResult.images.length)
         console.log('First image URL:', seedreamResult.images[0]?.url)
 
+        // Only deduct credits for actual images generated
+        const actualImagesGenerated = seedreamResult.images.length
+        const creditsToDeduct = Math.min(actualImagesGenerated, creditsRequired)
+        
+        console.log(`Deducting ${creditsToDeduct} credits for ${actualImagesGenerated} images (requested: ${creditsRequired})`)
+
         // Persist generation + images and deduct credits in a single transaction.
         console.log('Saving to database...')
         const [updatedUser, generation] = await prisma.$transaction([
@@ -109,7 +115,7 @@ export async function POST(request: NextRequest) {
             where: { id: user.id },
             data: {
               creditsBalance: {
-                decrement: creditsRequired,
+                decrement: creditsToDeduct,
               },
             },
           }),
@@ -121,9 +127,9 @@ export async function POST(request: NextRequest) {
               configMode: config.mode,
               configResolution: config.resolution,
               configRatio: config.ratio,
-              count: config.count,
+              count: actualImagesGenerated, // Store actual count, not requested count
               status: 'complete',
-              creditsCharged: creditsRequired,
+              creditsCharged: creditsToDeduct,
               seedreamRequestId: null,
               images: {
                 create: seedreamResult.images.map((img) => ({

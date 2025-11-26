@@ -15,7 +15,7 @@ export async function POST() {
       model: 'seedream-4-0-250828',
       stream: true,
       watermark: true,
-      sequentialImageGeneration: 'auto',
+      sequentialImageGeneration: 'auto' as const,
       sequentialImageGenerationOptions: {
         max_images: 4
       }

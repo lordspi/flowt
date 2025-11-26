@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
       model: 'seedream-4-0-250828',
       stream: false,
       watermark: true,
-      sequentialImageGeneration: 'disabled'
+      sequentialImageGeneration: 'auto' as const,
     }
 
     console.log('Bypass auth - generating with Seedream:', { prompt, config: seedreamConfig })
