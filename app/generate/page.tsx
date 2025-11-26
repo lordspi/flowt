@@ -15,10 +15,9 @@ export default function GeneratePage() {
   const [config, setConfig] = useState({ 
     mode: 'text-to-image' as const, 
     resolution: '2K' as '2K' | '4K', 
-    ratio: '1:1' as const, 
+    ratio: '1:1' as '1:1' | '16:9' | '9:16' | '4:3' | '3:4' | '21:9', 
     count: 15, 
     credits: 0,
-    aspectRatios: [] as string[],
     sequentialGeneration: false,
     formats: ['jpg'] as string[]
   })
@@ -194,7 +193,6 @@ export default function GeneratePage() {
             resolution: config.resolution,
             ratio: config.ratio,
             count: config.count,
-            aspectRatios: config.aspectRatios,
             sequentialImageGeneration: config.sequentialGeneration ? 'auto' : 'disabled',
             sequentialImageGenerationOptions: config.sequentialGeneration ? { max_images: config.count } : undefined,
             formats: config.formats,
@@ -338,51 +336,22 @@ export default function GeneratePage() {
                       <span className="px-2 py-1 bg-green-50 text-green-700 rounded">{msg.model}</span>
                     </div>
                     
-                    {/* Generation Animation */}
-                    <div className="flex flex-col items-center justify-center py-8">
-                      <div className="relative mb-6">
-                        <div className="w-16 h-16 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full animate-pulse"></div>
-                        <div className="absolute inset-0 w-16 h-16 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full animate-ping"></div>
-                        <div className="absolute inset-2 w-12 h-12 bg-white rounded-full flex items-center justify-center">
-                          <div className="w-6 h-6 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full animate-spin"></div>
+                    {/* ChatGPT-style Generation Animation */}
+                    <div className="bg-gray-50 rounded-xl p-6">
+                      <div className="flex items-center justify-center mb-4">
+                        <div className="relative">
+                          <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full animate-pulse"></div>
+                          <div className="absolute inset-0 w-8 h-8 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full animate-ping opacity-20"></div>
                         </div>
                       </div>
-                      
-                      <div className="text-center space-y-2">
-                        <h3 className="text-lg font-semibold text-gray-900">Generating with Seedream 4.0</h3>
-                        <p className="text-sm text-gray-600">Creating {msg.count} {msg.count === 1 ? 'image' : 'images'} with AI magic...</p>
-                        
-                        {/* Progress bars */}
-                        <div className="w-full max-w-xs mx-auto space-y-2">
-                          <div className="flex justify-between text-xs text-gray-500">
-                            <span>Processing prompt</span>
-                            <span>✓</span>
-                          </div>
-                          <div className="w-full bg-gray-200 rounded-full h-1">
-                            <div className="bg-purple-500 h-1 rounded-full w-full"></div>
-                          </div>
-                          
-                          <div className="flex justify-between text-xs text-gray-500">
-                            <span>Generating images</span>
-                            <span className="animate-pulse">...</span>
-                          </div>
-                          <div className="w-full bg-gray-200 rounded-full h-1">
-                            <div className="bg-gradient-to-r from-purple-500 to-blue-500 h-1 rounded-full animate-pulse w-3/4"></div>
-                          </div>
-                          
-                          <div className="flex justify-between text-xs text-gray-500">
-                            <span>Applying final touches</span>
-                            <span className="text-gray-400">...</span>
-                          </div>
-                          <div className="w-full bg-gray-200 rounded-full h-1">
-                            <div className="bg-gray-300 h-1 rounded-full w-1/4"></div>
-                          </div>
+                      <div className="text-center">
+                        <div className="flex items-center justify-center gap-1 mb-2">
+                          <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                          <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                          <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
                         </div>
-                        
-                        <div className="flex items-center gap-2 text-xs text-gray-500 mt-4">
-                          <span className="w-2 h-2 rounded-full bg-purple-500 animate-pulse"></span>
-                          <span>Powered by BytePlus Seedream 4.0</span>
-                        </div>
+                        <p className="text-sm text-gray-600">Generating {msg.count} {msg.count === 1 ? 'image' : 'images'}...</p>
+                        <p className="text-xs text-gray-500 mt-1">Creating with Seedream 4.0</p>
                       </div>
                     </div>
                   </div>
@@ -448,9 +417,6 @@ export default function GeneratePage() {
         <div className="max-w-4xl mx-auto">
           <div className="bg-white rounded-3xl shadow-2xl px-3.5 md:px-5 py-3.5 md:py-4 border border-gray-100 scale-[0.7] md:scale-[0.75] origin-bottom">
             <div className="flex gap-3 md:gap-4 items-start">
-              <button className="flex-shrink-0 w-11 h-11 md:w-12 md:h-12 rounded-2xl border border-dashed border-gray-300 bg-gray-50 flex items-center justify-center text-gray-400 hover:border-purple-300 hover:bg-purple-50 transition-colors">
-                <Upload className="w-5 h-5" />
-              </button>
               <div className="flex-1 flex flex-col gap-2">
                 <div className="flex flex-wrap items-center gap-2 text-sm md:text-base">
                   <span className="text-blue-600 font-medium">Auto Mode</span>
@@ -494,10 +460,8 @@ export default function GeneratePage() {
                   </div>
                 )}
               </div>
-            </div>
 
-            {/* Image Upload Button */}
-            <div className="mt-2.5 flex items-center gap-2">
+              {/* Upload Button */}
               <input
                 ref={fileInputRef}
                 type="file"
@@ -508,16 +472,10 @@ export default function GeneratePage() {
               />
               <button
                 onClick={() => fileInputRef.current?.click()}
-                className="flex items-center gap-2 px-3 py-1.5 border border-gray-200 rounded-xl bg-gray-50 text-xs md:text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                className="flex-shrink-0 w-11 h-11 md:w-12 md:h-12 rounded-2xl border border-dashed border-gray-300 bg-gray-50 flex items-center justify-center text-gray-400 hover:border-purple-300 hover:bg-purple-50 transition-colors"
               >
-                <Upload className="w-4 h-4" />
-                Upload Reference Images
+                <Upload className="w-5 h-5" />
               </button>
-              {uploadedImages.length > 0 && (
-                <span className="text-xs text-gray-500">
-                  {uploadedImages.length} image{uploadedImages.length > 1 ? 's' : ''} uploaded
-                </span>
-              )}
             </div>
 
             <div className="mt-2.5 flex flex-wrap gap-2 md:gap-3 items-center text-xs md:text-sm">
@@ -531,12 +489,69 @@ export default function GeneratePage() {
               >
                 {config.resolution}
               </button>
-              <button
-                onClick={() => setShowConfig(true)}
-                className="px-3 py-1.5 border border-gray-200 rounded-xl text-xs md:text-sm text-gray-800 hover:border-purple-300 hover:bg-purple-50 transition-colors"
-              >
-                {config.ratio}
-              </button>
+              {/* Aspect Ratio Buttons */}
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setConfig({ ...config, ratio: '1:1' })}
+                  className={`px-2 py-1.5 text-xs rounded-lg border transition-all ${
+                    config.ratio === '1:1'
+                      ? 'border-purple-500 bg-purple-50 text-purple-600'
+                      : 'border-gray-200 text-gray-600 hover:border-purple-200'
+                  }`}
+                >
+                  <Grid3x3 className="w-3 h-3" />
+                </button>
+                <button
+                  onClick={() => setConfig({ ...config, ratio: '16:9' })}
+                  className={`px-2 py-1.5 text-xs rounded-lg border transition-all ${
+                    config.ratio === '16:9'
+                      ? 'border-purple-500 bg-purple-50 text-purple-600'
+                      : 'border-gray-200 text-gray-600 hover:border-purple-200'
+                  }`}
+                >
+                  <span className="w-3 h-3 border border-current inline-block"></span>
+                </button>
+                <button
+                  onClick={() => setConfig({ ...config, ratio: '9:16' })}
+                  className={`px-2 py-1.5 text-xs rounded-lg border transition-all ${
+                    config.ratio === '9:16'
+                      ? 'border-purple-500 bg-purple-50 text-purple-600'
+                      : 'border-gray-200 text-gray-600 hover:border-purple-200'
+                  }`}
+                >
+                  <span className="w-3 h-3 border border-current inline-block rotate-90"></span>
+                </button>
+                <button
+                  onClick={() => setConfig({ ...config, ratio: '4:3' })}
+                  className={`px-2 py-1.5 text-xs rounded-lg border transition-all ${
+                    config.ratio === '4:3'
+                      ? 'border-purple-500 bg-purple-50 text-purple-600'
+                      : 'border-gray-200 text-gray-600 hover:border-purple-200'
+                  }`}
+                >
+                  <span className="w-3 h-3 border border-current inline-block"></span>
+                </button>
+                <button
+                  onClick={() => setConfig({ ...config, ratio: '3:4' })}
+                  className={`px-2 py-1.5 text-xs rounded-lg border transition-all ${
+                    config.ratio === '3:4'
+                      ? 'border-purple-500 bg-purple-50 text-purple-600'
+                      : 'border-gray-200 text-gray-600 hover:border-purple-200'
+                  }`}
+                >
+                  <span className="w-3 h-3 border border-current inline-block rotate-90"></span>
+                </button>
+                <button
+                  onClick={() => setConfig({ ...config, ratio: '21:9' })}
+                  className={`px-2 py-1.5 text-xs rounded-lg border transition-all ${
+                    config.ratio === '21:9'
+                      ? 'border-purple-500 bg-purple-50 text-purple-600'
+                      : 'border-gray-200 text-gray-600 hover:border-purple-200'
+                  }`}
+                >
+                  <span className="w-4 h-2 border border-current inline-block"></span>
+                </button>
+              </div>
               <button
                 onClick={() => setShowConfig(true)}
                 className="px-3 py-1.5 border border-gray-200 rounded-xl text-xs md:text-sm text-gray-800 hover:border-purple-300 hover:bg-purple-50 transition-colors"
@@ -599,26 +614,6 @@ export default function GeneratePage() {
                     ))}
                   </div>
                 </div>
-
-                {/* Aspect ratio */}
-                <div className="mb-5">
-                  <div className="mb-2 text-xs font-medium text-gray-500">Aspect Ratio (Seedream 4.0)</div>
-                  <div className="grid grid-cols-3 gap-2">
-                    {['1:1', '16:9', '9:16', '4:3', '3:4', '21:9'].map((ratio) => (
-                      <button
-                        key={ratio}
-                        onClick={() => setConfig({ ...config, ratio: ratio as any })}
-                        className={`py-1.5 text-xs rounded-lg border transition-all ${
-                          config.ratio === ratio
-                            ? 'border-purple-500 bg-white text-purple-600 shadow-sm'
-                            : 'border-gray-200 text-gray-600 hover:border-purple-200'
-                        }`}
-                      >
-                        {ratio}
-                      </button>
-                    ))}
-                  </div>
-                </div>
                 
                 {/* Maximum images per generation */}
                 <div className="mb-5">
@@ -663,35 +658,6 @@ export default function GeneratePage() {
                   {config.sequentialGeneration && (
                     <div className="mt-2 text-xs text-gray-500">
                       Generate {config.count} coherent images in sequence
-                    </div>
-                  )}
-                </div>
-
-                {/* Multiple Aspect Ratios */}
-                <div className="mb-5">
-                  <div className="mb-2 text-xs font-medium text-gray-500">Multiple Aspect Ratios</div>
-                  <div className="space-y-2">
-                    {['1:1', '16:9', '9:16', '4:3', '3:4'].map((ratio) => (
-                      <label key={ratio} className="flex items-center gap-2 text-xs">
-                        <input
-                          type="checkbox"
-                          checked={config.aspectRatios.includes(ratio)}
-                          onChange={(e) => {
-                            if (e.target.checked) {
-                              setConfig({ ...config, aspectRatios: [...config.aspectRatios, ratio] })
-                            } else {
-                              setConfig({ ...config, aspectRatios: config.aspectRatios.filter(r => r !== ratio) })
-                            }
-                          }}
-                          className="rounded"
-                        />
-                        <span>{ratio}</span>
-                      </label>
-                    ))}
-                  </div>
-                  {config.aspectRatios.length > 0 && (
-                    <div className="mt-2 text-xs text-gray-500">
-                      Selected: {config.aspectRatios.join(', ')}
                     </div>
                   )}
                 </div>
