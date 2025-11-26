@@ -12,7 +12,16 @@ export default function GeneratePage() {
   const [prompt, setPrompt] = useState('')
   const [isGenerating, setIsGenerating] = useState(false)
   const [showConfig, setShowConfig] = useState(false)
-  const [config, setConfig] = useState({ mode: 'text-to-image', resolution: '2K', ratio: '1:1', count: 15, credits: 0 })
+  const [config, setConfig] = useState({ 
+    mode: 'text-to-image', 
+    resolution: '2K', 
+    ratio: '1:1', 
+    count: 15, 
+    credits: 0,
+    aspectRatios: [],
+    sequentialGeneration: false,
+    formats: ['jpg']
+  })
   const [isLoadingUser, setIsLoadingUser] = useState(true)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement | null>(null)
@@ -117,14 +126,24 @@ export default function GeneratePage() {
     setIsGenerating(true)
 
     try {
-      const response = await fetch('/api/generate-bypass', {
+      const response = await fetch('/api/generate', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           prompt: promptText,
-          config,
+          config: {
+            mode: config.mode,
+            resolution: config.resolution,
+            ratio: config.ratio,
+            count: config.count,
+            aspectRatios: config.aspectRatios,
+            sequentialImageGeneration: config.sequentialGeneration ? 'auto' : 'disabled',
+            sequentialImageGenerationOptions: config.sequentialGeneration ? { max_images: config.count } : undefined,
+            formats: config.formats,
+            stream: config.sequentialGeneration
+          },
         }),
       })
 
@@ -524,6 +543,55 @@ export default function GeneratePage() {
                       className="w-16 px-2 py-1 border rounded text-center text-xs"
                     />
                   </div>
+                </div>
+
+                {/* Sequential Generation */}
+                <div className="mb-5">
+                  <div className="mb-2 text-xs font-medium text-gray-500">Sequential Generation</div>
+                  <button
+                    onClick={() => setConfig({ ...config, sequentialGeneration: !config.sequentialGeneration })}
+                    className={`w-full px-4 py-2 text-xs rounded-lg border transition-all ${
+                      config.sequentialGeneration
+                        ? 'border-purple-500 bg-purple-50 text-purple-600'
+                        : 'border-gray-200 text-gray-600 hover:border-purple-200'
+                    }`}
+                  >
+                    {config.sequentialGeneration ? '✓ Sequential Mode ON' : '○ Sequential Mode OFF'}
+                  </button>
+                  {config.sequentialGeneration && (
+                    <div className="mt-2 text-xs text-gray-500">
+                      Generate {config.count} coherent images in sequence
+                    </div>
+                  )}
+                </div>
+
+                {/* Multiple Aspect Ratios */}
+                <div className="mb-5">
+                  <div className="mb-2 text-xs font-medium text-gray-500">Multiple Aspect Ratios</div>
+                  <div className="space-y-2">
+                    {['1:1', '16:9', '9:16', '4:3'].map((ratio) => (
+                      <label key={ratio} className="flex items-center gap-2 text-xs">
+                        <input
+                          type="checkbox"
+                          checked={config.aspectRatios.includes(ratio)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setConfig({ ...config, aspectRatios: [...config.aspectRatios, ratio] })
+                            } else {
+                              setConfig({ ...config, aspectRatios: config.aspectRatios.filter(r => r !== ratio) })
+                            }
+                          }}
+                          className="rounded"
+                        />
+                        <span>{ratio}</span>
+                      </label>
+                    ))}
+                  </div>
+                  {config.aspectRatios.length > 0 && (
+                    <div className="mt-2 text-xs text-gray-500">
+                      Selected: {config.aspectRatios.join(', ')}
+                    </div>
+                  )}
                 </div>
 
                 {/* Image size */}

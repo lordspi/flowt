@@ -16,7 +16,8 @@ export async function GET() {
       try {
         const { prisma } = await import('@/lib/db')
         
-        const user = await prisma.user.findUnique({
+        // Try to find user first
+        let user = await prisma.user.findUnique({
           where: { id: session.user.id },
           select: {
             id: true,
@@ -36,9 +37,37 @@ export async function GET() {
           },
         })
 
-        if (user) {
-          return NextResponse.json(user, { status: 200 })
+        // Create user if doesn't exist
+        if (!user) {
+          user = await prisma.user.create({
+            data: {
+              id: session.user.id,
+              email: session.user.email!,
+              name: session.user.name,
+              image: session.user.image,
+              creditsBalance: 15, // Initial credits for new users
+              currentPlan: 'FREE',
+            },
+            select: {
+              id: true,
+              email: true,
+              name: true,
+              image: true,
+              role: true,
+              currentPlan: true,
+              creditsBalance: true,
+              organization: {
+                select: {
+                  id: true,
+                  name: true,
+                  plan: true,
+                },
+              },
+            },
+          })
         }
+
+        return NextResponse.json(user, { status: 200 })
       } catch (dbError) {
         console.warn('Database lookup failed, using demo mode:', dbError)
       }

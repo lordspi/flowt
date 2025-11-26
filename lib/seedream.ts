@@ -13,6 +13,10 @@ export interface SeedreamConfig {
   stream?: boolean
   seed?: number
   guidanceScale?: number
+  // Multiple aspect ratios support
+  aspectRatios?: string[]
+  // Multiple image formats
+  formats?: string[]
 }
 
 export interface SeedreamImage {
@@ -43,7 +47,7 @@ export async function generateWithSeedream(prompt: string, config: SeedreamConfi
     'adaptive': 'adaptive',
   }
 
-  // Build request body based on working sample format
+  // Build request body based on working sample format with enhanced features
   const body: any = {
     model: config.model || 'seedream-4-0-250828',
     prompt,
@@ -54,13 +58,24 @@ export async function generateWithSeedream(prompt: string, config: SeedreamConfi
     sequential_image_generation: config.sequentialImageGeneration || 'disabled',
   }
 
+  // Handle sequential image generation options
+  if (config.sequentialImageGeneration === 'auto' && config.sequentialImageGenerationOptions) {
+    body.sequential_image_generation_options = config.sequentialImageGenerationOptions
+  }
+
+  // Handle multiple aspect ratios
+  if (config.aspectRatios && config.aspectRatios.length > 0) {
+    body.aspect_ratios = config.aspectRatios
+  }
+
+  // Handle multiple formats
+  if (config.formats && config.formats.length > 0) {
+    body.formats = config.formats
+  }
+
   // Add optional parameters if provided
   if (config.image) {
     body.image = config.image
-  }
-
-  if (config.sequentialImageGeneration === 'auto' && config.sequentialImageGenerationOptions) {
-    body.sequential_image_generation_options = config.sequentialImageGenerationOptions
   }
 
   if (config.seed !== undefined) {
