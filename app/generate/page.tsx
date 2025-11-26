@@ -1,9 +1,13 @@
 'use client'
 
-import { motion, AnimatePresence } from 'framer-motion'
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, Settings, Send, Download, Share2, X, RefreshCw, Grid3x3, Upload } from 'lucide-react'
+import dynamic from 'next/dynamic'
+
+// Dynamically import motion components for better performance
+const MotionDiv = dynamic(() => import('framer-motion').then((mod) => mod.motion.div), { ssr: false })
+const AnimatePresence = dynamic(() => import('framer-motion').then((mod) => mod.AnimatePresence), { ssr: false })
 
 export default function GeneratePage() {
   const router = useRouter()
@@ -22,7 +26,7 @@ export default function GeneratePage() {
     formats: ['jpg'] as string[]
   })
   const [uploadedImages, setUploadedImages] = useState<string[]>([])
-  const [isLoadingUser, setIsLoadingUser] = useState(true)
+  const [isLoadingUser, setIsLoadingUser] = useState(false) // Start with false for instant UI
   const fileInputRef = useRef<HTMLInputElement | null>(null)
 
   // Handle image upload
@@ -113,6 +117,7 @@ export default function GeneratePage() {
       }
     }
 
+    // Load user data in background without blocking UI
     loadUser()
 
     return () => {
@@ -315,7 +320,7 @@ export default function GeneratePage() {
             </div>
           ) : (
             messages.map((msg) => (
-              <motion.div
+              <MotionDiv
                 key={msg.id}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -405,7 +410,7 @@ export default function GeneratePage() {
                     </button>
                   </div>
                 )}
-              </motion.div>
+              </MotionDiv>
             ))
           )}
           <div ref={messagesEndRef} />
@@ -517,8 +522,8 @@ export default function GeneratePage() {
       <AnimatePresence>
         {showConfig && (
           <>
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowConfig(false)} className="fixed inset-0 bg-black/20 z-50" />
-            <motion.div initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} transition={{ type: 'spring', damping: 25, stiffness: 200 }} className="fixed right-0 top-0 h-full w-96 bg-white shadow-2xl z-50 overflow-y-auto">
+            <MotionDiv initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowConfig(false)} className="fixed inset-0 bg-black/20 z-50" />
+            <MotionDiv initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} transition={{ type: 'spring', damping: 25, stiffness: 200 }} className="fixed right-0 top-0 h-full w-96 bg-white shadow-2xl z-50 overflow-y-auto">
               <div className="p-6">
                 <div className="flex items-center justify-between mb-6">
                   <div className="flex items-center gap-2">
@@ -642,7 +647,7 @@ export default function GeneratePage() {
                   />
                 </div>
               </div>
-            </motion.div>
+            </MotionDiv>
           </>
         )}
       </AnimatePresence>
