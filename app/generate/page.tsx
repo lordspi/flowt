@@ -12,7 +12,7 @@ export default function GeneratePage() {
   const [prompt, setPrompt] = useState('')
   const [isGenerating, setIsGenerating] = useState(false)
   const [showConfig, setShowConfig] = useState(false)
-  const [config, setConfig] = useState({ mode: 'Auto mode', resolution: '2K', ratio: '1:1', count: 15, credits: 0 })
+  const [config, setConfig] = useState({ mode: 'text-to-image', resolution: '2K', ratio: '1:1', count: 15, credits: 0 })
   const [isLoadingUser, setIsLoadingUser] = useState(true)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement | null>(null)
@@ -103,7 +103,7 @@ export default function GeneratePage() {
         hour12: false,
       }),
       prompt: promptText,
-      mode: 'Multi-image',
+      mode: config.mode === 'text-to-image' ? 'Auto mode' : config.mode,
       resolution: config.resolution,
       ratio: config.ratio,
       model: 'Flowt-2.0',
@@ -365,7 +365,7 @@ export default function GeneratePage() {
               </button>
               <div className="flex-1 flex flex-col gap-2">
                 <div className="flex flex-wrap items-center gap-2 text-sm md:text-base">
-                  <span className="text-blue-600 font-medium">Auto Group Mode</span>
+                  <span className="text-blue-600 font-medium">Auto Mode</span>
                   <span className="text-gray-400">Describe the image you want to generate</span>
                 </div>
                 <div className="relative">
@@ -389,7 +389,7 @@ export default function GeneratePage() {
             <div className="mt-2.5 flex flex-wrap gap-2 md:gap-3 items-center text-xs md:text-sm">
               <div className="px-3 py-1.5 border border-gray-200 rounded-xl bg-gray-50 text-xs md:text-sm text-gray-700 flex items-center gap-2 select-none">
                 <span className="text-[10px] md:text-xs px-2 py-0.5 rounded-full bg-gray-200 text-gray-700">Auto</span>
-                <span>group image</span>
+                <span>image generation</span>
               </div>
               <button
                 onClick={() => setShowConfig(true)}

@@ -1,5 +1,6 @@
 'use client'
 
+import React from 'react'
 import { motion } from 'framer-motion'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
@@ -13,13 +14,45 @@ export default function GalleryPage() {
   const [sortOption, setSortOption] = useState<'newest' | 'oldest'>('newest')
 
   const [mounted, setMounted] = useState(false)
+  const [galleryItems, setGalleryItems] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     setMounted(true)
+    fetchGenerations()
   }, [])
 
-  // User-focused gallery items - empty for now, will be populated by user generations
-  const galleryItems: any[] = []
+  const fetchGenerations = async () => {
+    try {
+      const res = await fetch('/api/generations')
+      if (res.status === 401) {
+        router.push('/signin')
+        return
+      }
+      if (!res.ok) {
+        throw new Error('Failed to fetch generations')
+      }
+      const data = await res.json()
+      
+      // Transform data to match gallery format
+      const transformedData = data.map((gen: any) => ({
+        id: gen.id,
+        prompt: gen.prompt,
+        timestamp: gen.timestamp,
+        model: gen.model,
+        image: gen.images?.[0]?.url || `https://picsum.photos/seed/${gen.prompt?.replace(/\s+/g, '-')}/400/400.jpg`,
+        images: gen.images || [],
+        count: gen.count,
+        status: gen.status,
+      }))
+      
+      setGalleryItems(transformedData)
+    } catch (error) {
+      console.error('Error fetching generations:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   if (!mounted) {
     return null
@@ -141,17 +174,40 @@ export default function GalleryPage() {
                 onClick={() => router.push(`/generate?prompt=${encodeURIComponent(item.prompt)}`)}
               >
                 <div className="aspect-square relative bg-gray-100">
-                  <img
-                    src={item.image}
-                    alt={item.prompt}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    onError={(e) => {
-                      e.currentTarget.src = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Crect fill='%23ddd' width='400' height='400'/%3E%3Ctext fill='%23999' font-family='Arial' font-size='16' x='50%25' y='50%25' text-anchor='middle' dy='.3em'%3EGallery Image%3C/text%3E%3C/svg%3E` 
-                    }}
-                  />
+                  {item.images && item.images.length > 0 ? (
+                    <div className="relative w-full h-full">
+                      <img
+                        src={item.images[0].url}
+                        alt={item.prompt}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        onError={(e) => {
+                          e.currentTarget.src = `https://picsum.photos/seed/${item.prompt?.replace(/\s+/g, '-')}/400/400.jpg` 
+                        }}
+                      />
+                      {item.images.length > 1 && (
+                        <div className="absolute top-3 left-3 px-2 py-1 bg-black/70 backdrop-blur-sm text-white text-xs rounded">
+                          +{item.images.length - 1} more
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <img
+                      src={item.image}
+                      alt={item.prompt}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      onError={(e) => {
+                        e.currentTarget.src = `https://picsum.photos/seed/${item.prompt?.replace(/\s+/g, '-')}/400/400.jpg` 
+                      }}
+                    />
+                  )}
                   <div className="absolute top-3 right-3 px-2 py-1 bg-black/70 backdrop-blur-sm text-white text-xs rounded">
                     {item.model}
                   </div>
+                  {item.count > 1 && (
+                    <div className="absolute bottom-3 right-3 px-2 py-1 bg-purple-600/80 backdrop-blur-sm text-white text-xs rounded">
+                      {item.count} images
+                    </div>
+                  )}
                 </div>
                 <div className="p-4">
                   <p className="text-sm text-gray-900 line-clamp-2 mb-2">{item.prompt}</p>
@@ -178,11 +234,36 @@ export default function GalleryPage() {
                 <div
                   className={
                     density === 'comfortable'
-                      ? 'w-24 h-24 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0'
-                      : 'w-20 h-20 rounded-md overflow-hidden bg-gray-100 flex-shrink-0'
+                      ? 'w-24 h-24 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0 relative'
+                      : 'w-20 h-20 rounded-md overflow-hidden bg-gray-100 flex-shrink-0 relative'
                   }
                 >
-                  <img src={item.image} alt={item.prompt} className="w-full h-full object-cover" />
+                  {item.images && item.images.length > 0 ? (
+                    <React.Fragment>
+                      <img 
+                        src={item.images[0].url} 
+                        alt={item.prompt} 
+                        className="w-full h-full object-cover" 
+                        onError={(e) => {
+                          e.currentTarget.src = `https://picsum.photos/seed/${item.prompt?.replace(/\s+/g, '-')}/400/400.jpg` 
+                        }}
+                      />
+                      {item.images.length > 1 && (
+                        <div className="absolute top-1 right-1 px-1 py-0.5 bg-black/70 backdrop-blur-sm text-white text-xs rounded">
+                          +{item.images.length - 1}
+                        </div>
+                      )}
+                    </React.Fragment>
+                  ) : (
+                    <img 
+                      src={item.image} 
+                      alt={item.prompt} 
+                      className="w-full h-full object-cover" 
+                      onError={(e) => {
+                        e.currentTarget.src = `https://picsum.photos/seed/${item.prompt?.replace(/\s+/g, '-')}/400/400.jpg` 
+                      }}
+                    />
+                  )}
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm text-gray-900 mb-1">{item.prompt}</p>
@@ -190,6 +271,12 @@ export default function GalleryPage() {
                     <span>{item.timestamp}</span>
                     <span>•</span>
                     <span>{item.model}</span>
+                    {item.count > 1 && (
+                      <React.Fragment>
+                        <span>•</span>
+                        <span>{item.count} images</span>
+                      </React.Fragment>
+                    )}
                   </div>
                 </div>
               </motion.div>
@@ -197,7 +284,17 @@ export default function GalleryPage() {
           </div>
         )}
 
-        {galleryItems.length === 0 && (
+        {loading ? (
+          <div className="text-center py-20">
+            <div className="w-16 h-16 mx-auto mb-4 text-gray-300 animate-pulse">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Loading your gallery...</h3>
+            <p className="text-gray-500">Fetching your amazing creations</p>
+          </div>
+        ) : galleryItems.length === 0 ? (
           <div className="text-center py-20">
             <div className="w-16 h-16 mx-auto mb-4 text-gray-300">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
