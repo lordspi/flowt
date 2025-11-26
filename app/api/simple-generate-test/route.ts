@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
     console.error('Simple Generate API error:', error)
     
     return NextResponse.json({ 
-      error: error.message || 'Image generation failed' 
+      error: error instanceof Error ? error.message : 'Image generation failed' 
     }, { status: 500 })
   }
 }
