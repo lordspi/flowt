@@ -10,6 +10,13 @@ interface GenerateConfig {
   resolution: string
   ratio: string
   count: number
+  sequentialImageGeneration?: 'auto' | 'disabled'
+  sequentialImageGenerationOptions?: {
+    max_images?: number
+  }
+  formats?: string[]
+  stream?: boolean
+  image?: string | string[]
 }
 
 interface GenerateRequestBody {
@@ -35,7 +42,17 @@ function validateBody(body: unknown): GenerateRequestBody {
     throw new Error('Config is required')
   }
 
-  const { mode, resolution, ratio, count } = config as Partial<GenerateConfig>
+  const { 
+    mode, 
+    resolution, 
+    ratio, 
+    count,
+    sequentialImageGeneration,
+    sequentialImageGenerationOptions,
+    formats,
+    stream,
+    image
+  } = config as Partial<GenerateConfig>
 
   if (!mode || !resolution || !ratio || typeof count !== 'number') {
     throw new Error('Invalid config: mode, resolution, ratio and count are required')
@@ -50,6 +67,11 @@ function validateBody(body: unknown): GenerateRequestBody {
       resolution,
       ratio,
       count: safeCount,
+      sequentialImageGeneration,
+      sequentialImageGenerationOptions,
+      formats,
+      stream,
+      image,
     },
   }
 }
