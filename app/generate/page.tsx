@@ -417,6 +417,21 @@ export default function GeneratePage() {
         <div className="max-w-4xl mx-auto">
           <div className="bg-white rounded-3xl shadow-2xl px-3.5 md:px-5 py-3.5 md:py-4 border border-gray-100 scale-[0.7] md:scale-[0.75] origin-bottom">
             <div className="flex gap-3 md:gap-4 items-start">
+              {/* Upload Button */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                accept="image/*"
+                onChange={handleImageUpload}
+                className="hidden"
+              />
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="flex-shrink-0 w-11 h-11 md:w-12 md:h-12 rounded-2xl border border-dashed border-gray-300 bg-gray-50 flex items-center justify-center text-gray-400 hover:border-purple-300 hover:bg-purple-50 transition-colors"
+              >
+                <Upload className="w-5 h-5" />
+              </button>
               <div className="flex-1 flex flex-col gap-2">
                 <div className="flex flex-wrap items-center gap-2 text-sm md:text-base">
                   <span className="text-blue-600 font-medium">Auto Mode</span>
@@ -460,22 +475,6 @@ export default function GeneratePage() {
                   </div>
                 )}
               </div>
-
-              {/* Upload Button */}
-              <input
-                ref={fileInputRef}
-                type="file"
-                multiple
-                accept="image/*"
-                onChange={handleImageUpload}
-                className="hidden"
-              />
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                className="flex-shrink-0 w-11 h-11 md:w-12 md:h-12 rounded-2xl border border-dashed border-gray-300 bg-gray-50 flex items-center justify-center text-gray-400 hover:border-purple-300 hover:bg-purple-50 transition-colors"
-              >
-                <Upload className="w-5 h-5" />
-              </button>
             </div>
 
             <div className="mt-2.5 flex flex-wrap gap-2 md:gap-3 items-center text-xs md:text-sm">
