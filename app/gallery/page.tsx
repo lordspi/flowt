@@ -156,134 +156,6 @@ export default function GalleryPage() {
 
       {/* GALLERY CONTENT */}
       <div className="max-w-7xl mx-auto px-6 py-8">
-        {viewMode === 'grid' ? (
-          <div
-            className={`grid grid-cols-1 md:grid-cols-2 ${
-              density === 'comfortable'
-                ? 'lg:grid-cols-3 gap-6'
-                : 'lg:grid-cols-5 gap-3'
-            }`}
-          >
-            {sortedItems.map((item, index) => (
-              <motion.div
-                key={item.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-                className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all cursor-pointer"
-                onClick={() => router.push(`/generate?prompt=${encodeURIComponent(item.prompt)}`)}
-              >
-                <div className="aspect-square relative bg-gray-100">
-                  {item.images && item.images.length > 0 ? (
-                    <div className="relative w-full h-full">
-                      <img
-                        src={item.images[0].url}
-                        alt={item.prompt}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                        onError={(e) => {
-                          e.currentTarget.src = `https://picsum.photos/seed/${item.prompt?.replace(/\s+/g, '-')}/400/400.jpg` 
-                        }}
-                      />
-                      {item.images.length > 1 && (
-                        <div className="absolute top-3 left-3 px-2 py-1 bg-black/70 backdrop-blur-sm text-white text-xs rounded">
-                          +{item.images.length - 1} more
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-                    <img
-                      src={item.image}
-                      alt={item.prompt}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      onError={(e) => {
-                        e.currentTarget.src = `https://picsum.photos/seed/${item.prompt?.replace(/\s+/g, '-')}/400/400.jpg` 
-                      }}
-                    />
-                  )}
-                  <div className="absolute top-3 right-3 px-2 py-1 bg-black/70 backdrop-blur-sm text-white text-xs rounded">
-                    {item.model}
-                  </div>
-                  {item.count > 1 && (
-                    <div className="absolute bottom-3 right-3 px-2 py-1 bg-purple-600/80 backdrop-blur-sm text-white text-xs rounded">
-                      {item.count} images
-                    </div>
-                  )}
-                </div>
-                <div className="p-4">
-                  <p className="text-sm text-gray-900 line-clamp-2 mb-2">{item.prompt}</p>
-                  <p className="text-xs text-gray-500">{item.timestamp}</p>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        ) : (
-          <div className={density === 'comfortable' ? 'space-y-4' : 'space-y-2'}>
-            {sortedItems.map((item, index) => (
-              <motion.div
-                key={item.id}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: index * 0.05 }}
-                className={
-                  density === 'comfortable'
-                    ? 'bg-white rounded-2xl p-4 shadow-sm hover:shadow-md transition-all flex gap-4 cursor-pointer'
-                    : 'bg-white rounded-xl p-3 shadow-sm hover:shadow-md transition-all flex gap-3 cursor-pointer'
-                }
-                onClick={() => router.push(`/generate?prompt=${encodeURIComponent(item.prompt)}`)}
-              >
-                <div
-                  className={
-                    density === 'comfortable'
-                      ? 'w-24 h-24 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0 relative'
-                      : 'w-20 h-20 rounded-md overflow-hidden bg-gray-100 flex-shrink-0 relative'
-                  }
-                >
-                  {item.images && item.images.length > 0 ? (
-                    <React.Fragment>
-                      <img 
-                        src={item.images[0].url} 
-                        alt={item.prompt} 
-                        className="w-full h-full object-cover" 
-                        onError={(e) => {
-                          e.currentTarget.src = `https://picsum.photos/seed/${item.prompt?.replace(/\s+/g, '-')}/400/400.jpg` 
-                        }}
-                      />
-                      {item.images.length > 1 && (
-                        <div className="absolute top-1 right-1 px-1 py-0.5 bg-black/70 backdrop-blur-sm text-white text-xs rounded">
-                          +{item.images.length - 1}
-                        </div>
-                      )}
-                    </React.Fragment>
-                  ) : (
-                    <img 
-                      src={item.image} 
-                      alt={item.prompt} 
-                      className="w-full h-full object-cover" 
-                      onError={(e) => {
-                        e.currentTarget.src = `https://picsum.photos/seed/${item.prompt?.replace(/\s+/g, '-')}/400/400.jpg` 
-                      }}
-                    />
-                  )}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm text-gray-900 mb-1">{item.prompt}</p>
-                  <div className="flex gap-2 text-xs text-gray-500">
-                    <span>{item.timestamp}</span>
-                    <span>•</span>
-                    <span>{item.model}</span>
-                    {item.count > 1 && (
-                      <React.Fragment>
-                        <span>•</span>
-                        <span>{item.count} images</span>
-                      </React.Fragment>
-                    )}
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        )}
-
         {loading ? (
           <div className="text-center py-20">
             <div className="w-16 h-16 mx-auto mb-4 text-gray-300 animate-pulse">
@@ -310,6 +182,136 @@ export default function GalleryPage() {
               Create Your First Image
             </button>
           </div>
+        ) : (
+          <>
+            {viewMode === 'grid' ? (
+              <div
+                className={`grid grid-cols-1 md:grid-cols-2 ${
+                  density === 'comfortable'
+                    ? 'lg:grid-cols-3 gap-6'
+                    : 'lg:grid-cols-5 gap-3'
+                }`}
+              >
+                {sortedItems.map((item, index) => (
+                  <motion.div
+                    key={item.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.1 }}
+                    className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all cursor-pointer"
+                    onClick={() => router.push(`/generate?prompt=${encodeURIComponent(item.prompt)}`)}
+                  >
+                    <div className="aspect-square relative bg-gray-100">
+                      {item.images && item.images.length > 0 ? (
+                        <div className="relative w-full h-full">
+                          <img
+                            src={item.images[0].url}
+                            alt={item.prompt}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            onError={(e) => {
+                              e.currentTarget.src = `https://picsum.photos/seed/${item.prompt?.replace(/\s+/g, '-')}/400/400.jpg` 
+                            }}
+                          />
+                          {item.images.length > 1 && (
+                            <div className="absolute top-3 left-3 px-2 py-1 bg-black/70 backdrop-blur-sm text-white text-xs rounded">
+                              +{item.images.length - 1} more
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <img
+                          src={item.image}
+                          alt={item.prompt}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          onError={(e) => {
+                            e.currentTarget.src = `https://picsum.photos/seed/${item.prompt?.replace(/\s+/g, '-')}/400/400.jpg` 
+                          }}
+                        />
+                      )}
+                      <div className="absolute top-3 right-3 px-2 py-1 bg-black/70 backdrop-blur-sm text-white text-xs rounded">
+                        {item.model}
+                      </div>
+                      {item.count > 1 && (
+                        <div className="absolute bottom-3 right-3 px-2 py-1 bg-purple-600/80 backdrop-blur-sm text-white text-xs rounded">
+                          {item.count} images
+                        </div>
+                      )}
+                    </div>
+                    <div className="p-4">
+                      <p className="text-sm text-gray-900 line-clamp-2 mb-2">{item.prompt}</p>
+                      <p className="text-xs text-gray-500">{item.timestamp}</p>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            ) : (
+              <div className={density === 'comfortable' ? 'space-y-4' : 'space-y-2'}>
+                {sortedItems.map((item, index) => (
+                  <motion.div
+                    key={item.id}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: index * 0.05 }}
+                    className={
+                      density === 'comfortable'
+                        ? 'bg-white rounded-2xl p-4 shadow-sm hover:shadow-md transition-all flex gap-4 cursor-pointer'
+                        : 'bg-white rounded-xl p-3 shadow-sm hover:shadow-md transition-all flex gap-3 cursor-pointer'
+                    }
+                    onClick={() => router.push(`/generate?prompt=${encodeURIComponent(item.prompt)}`)}
+                  >
+                    <div
+                      className={
+                        density === 'comfortable'
+                          ? 'w-24 h-24 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0 relative'
+                          : 'w-20 h-20 rounded-md overflow-hidden bg-gray-100 flex-shrink-0 relative'
+                      }
+                    >
+                      {item.images && item.images.length > 0 ? (
+                        <React.Fragment>
+                          <img 
+                            src={item.images[0].url} 
+                            alt={item.prompt} 
+                            className="w-full h-full object-cover" 
+                            onError={(e) => {
+                              e.currentTarget.src = `https://picsum.photos/seed/${item.prompt?.replace(/\s+/g, '-')}/400/400.jpg` 
+                            }}
+                          />
+                          {item.images.length > 1 && (
+                            <div className="absolute top-1 right-1 px-1 py-0.5 bg-black/70 backdrop-blur-sm text-white text-xs rounded">
+                              +{item.images.length - 1}
+                            </div>
+                          )}
+                        </React.Fragment>
+                      ) : (
+                        <img 
+                          src={item.image} 
+                          alt={item.prompt} 
+                          className="w-full h-full object-cover" 
+                          onError={(e) => {
+                            e.currentTarget.src = `https://picsum.photos/seed/${item.prompt?.replace(/\s+/g, '-')}/400/400.jpg` 
+                          }}
+                        />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-gray-900 mb-1">{item.prompt}</p>
+                      <div className="flex gap-2 text-xs text-gray-500">
+                        <span>{item.timestamp}</span>
+                        <span>•</span>
+                        <span>{item.model}</span>
+                        {item.count > 1 && (
+                          <React.Fragment>
+                            <span>•</span>
+                            <span>{item.count} images</span>
+                          </React.Fragment>
+                        )}
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>
