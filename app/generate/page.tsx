@@ -276,9 +276,8 @@ export default function GeneratePage() {
             <ArrowLeft className="w-5 h-5" />
           </button>
           <div className="flex items-center gap-2">
-            <span className="text-xl font-bold text-gray-900">Generate</span>
-            <span className="px-2 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-medium">AI</span>
-          </div>
+          <h1 className="text-xl font-semibold">Dashboard</h1>
+        </div>
         </div>
         <div className="flex items-center gap-2">
           <span className="text-sm text-gray-600">{config.credits} credits</span>
@@ -332,13 +331,13 @@ export default function GeneratePage() {
                 </div>
                 
                 {msg.status === 'generating' ? (
-                  <div className="bg-white rounded-2xl p-4 md:p-5 shadow-sm border border-gray-100">
-                    <p className="text-gray-900 text-sm md:text-base mb-3">{msg.prompt}</p>
-                    <div className="flex flex-wrap gap-2 mb-4">
-                      <span className="px-2 py-1 bg-blue-50 text-blue-700 rounded">{msg.ratio}</span>
-                      <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded">{msg.resolution}</span>
-                      <span className="px-2 py-1 bg-purple-50 text-purple-700 rounded">{msg.mode}</span>
-                      <span className="px-2 py-1 bg-green-50 text-green-700 rounded">{msg.model}</span>
+                  <div className="bg-white rounded-2xl p-3 md:p-4 shadow-sm border border-gray-100">
+                    <p className="text-gray-900 text-xs md:text-sm mb-2">{msg.prompt}</p>
+                    <div className="flex flex-wrap gap-1 mb-3">
+                      <span className="px-1.5 py-0.5 bg-blue-50 text-blue-700 rounded text-xs">{msg.ratio}</span>
+                      <span className="px-1.5 py-0.5 bg-gray-100 text-gray-700 rounded text-xs">{msg.resolution}</span>
+                      <span className="px-1.5 py-0.5 bg-purple-50 text-purple-700 rounded text-xs">{msg.mode}</span>
+                      <span className="px-1.5 py-0.5 bg-green-50 text-green-700 rounded text-xs">{msg.model}</span>
                     </div>
                     
                     {/* ChatGPT-style Generation Animation */}
@@ -356,18 +355,18 @@ export default function GeneratePage() {
                           <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
                         </div>
                         <p className="text-sm text-gray-600">Generating {msg.count} {msg.count === 1 ? 'image' : 'images'}...</p>
-                        <p className="text-xs text-gray-500 mt-1">Creating with Seedream 4.0</p>
+                        <p className="text-xs text-gray-500 mt-1">Creating with Flowt-2.0</p>
                       </div>
                     </div>
                   </div>
                 ) : (
-                  <div className="bg-white rounded-2xl p-4 md:p-5 shadow-sm border border-gray-100">
-                    <p className="text-gray-900 text-sm md:text-base mb-3">{msg.prompt}</p>
-                    <div className="flex flex-wrap gap-2 mb-4">
-                      <span className="px-2 py-1 bg-blue-50 text-blue-700 rounded">{msg.ratio}</span>
-                      <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded">{msg.resolution}</span>
-                      <span className="px-2 py-1 bg-purple-50 text-purple-700 rounded">{msg.mode}</span>
-                      <span className="px-2 py-1 bg-green-50 text-green-700 rounded">{msg.model}</span>
+                  <div className="bg-white rounded-2xl p-3 md:p-4 shadow-sm border border-gray-100">
+                    <p className="text-gray-900 text-xs md:text-sm mb-2">{msg.prompt}</p>
+                    <div className="flex flex-wrap gap-1 mb-3">
+                      <span className="px-1.5 py-0.5 bg-blue-50 text-blue-700 rounded text-xs">{msg.ratio}</span>
+                      <span className="px-1.5 py-0.5 bg-gray-100 text-gray-700 rounded text-xs">{msg.resolution}</span>
+                      <span className="px-1.5 py-0.5 bg-purple-50 text-purple-700 rounded text-xs">{msg.mode}</span>
+                      <span className="px-1.5 py-0.5 bg-green-50 text-green-700 rounded text-xs">{msg.model}</span>
                     </div>
                     
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-4">
