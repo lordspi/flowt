@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
       resolution: config.resolution || '2K',
       ratio: config.ratio || '1:1',
       count: config.count || 1,
-      sequentialImageGeneration: config.sequentialGeneration ? 'auto' : 'disabled' as const,
+      sequentialImageGeneration: 'disabled' as const,
       formats: config.formats || ['jpg'],
       stream: false,
       image: config.image
