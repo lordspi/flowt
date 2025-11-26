@@ -18,9 +18,9 @@ export default function GeneratePage() {
   const [showConfig, setShowConfig] = useState(false)
   const [config, setConfig] = useState({ 
     mode: 'text-to-image' as const, 
-    resolution: '2K' as '2K' | '4K', 
+    resolution: '4K' as '2K' | '4K', 
     ratio: '1:1' as '1:1' | '16:9' | '9:16' | '4:3' | '3:4' | '21:9', 
-    count: 15, 
+    count: 1, 
     credits: 0,
     sequentialGeneration: false,
     formats: ['jpg'] as string[]
