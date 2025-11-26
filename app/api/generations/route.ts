@@ -5,16 +5,20 @@ export const dynamic = 'force-dynamic'
 
 export async function GET() {
   try {
+    console.log('Gallery API called')
     const session = await auth()
+    console.log('Session:', session?.user?.id ? 'Authenticated' : 'Not authenticated')
 
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     // Try database lookup if available
+    console.log('DATABASE_URL exists:', !!process.env.DATABASE_URL)
     if (process.env.DATABASE_URL) {
       try {
         const { prisma } = await import('@/lib/db')
+        console.log('Prisma imported successfully')
         
         const generations = await prisma.imageGeneration.findMany({
           where: { userId: session.user.id },
@@ -23,6 +27,14 @@ export async function GET() {
           },
           orderBy: { createdAt: 'desc' },
         })
+        
+        console.log('Found generations:', generations.length)
+        console.log('Sample generation data:', generations[0] ? {
+          id: generations[0].id,
+          prompt: generations[0].prompt,
+          imageCount: generations[0].images.length,
+          firstImageUrl: generations[0].images[0]?.url
+        } : 'No generations')
 
         // Transform the data for the frontend
         const transformedGenerations = generations.map((gen) => ({
@@ -49,6 +61,7 @@ export async function GET() {
           })),
         }))
 
+        console.log('Transformed generations:', transformedGenerations.length)
         return NextResponse.json(transformedGenerations, { status: 200 })
       } catch (dbError) {
         console.warn('Database lookup failed, returning empty gallery:', dbError)
@@ -56,6 +69,7 @@ export async function GET() {
     }
 
     // Fallback to empty array for demo mode
+    console.log('Returning empty array (demo mode)')
     return NextResponse.json([], { status: 200 })
 
   } catch (error) {

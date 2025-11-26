@@ -97,9 +97,13 @@ export async function POST(request: NextRequest) {
         }
 
         // Call Seedream 2.0 using the shared helper. This will throw if env is not configured.
+        console.log('Calling Seedream API with prompt:', prompt, 'and config:', config)
         const seedreamResult = await generateWithSeedream(prompt, config as GenerateConfig)
+        console.log('Seedream result received, images count:', seedreamResult.images.length)
+        console.log('First image URL:', seedreamResult.images[0]?.url)
 
         // Persist generation + images and deduct credits in a single transaction.
+        console.log('Saving to database...')
         const [updatedUser, generation] = await prisma.$transaction([
           prisma.user.update({
             where: { id: user.id },
@@ -135,6 +139,10 @@ export async function POST(request: NextRequest) {
             },
           }),
         ])
+
+        console.log('Database save successful. Generation ID:', generation.id)
+        console.log('Saved images count:', generation.images.length)
+        console.log('First saved image URL:', generation.images[0]?.url)
 
         return NextResponse.json(
           {
