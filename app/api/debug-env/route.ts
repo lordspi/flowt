@@ -23,7 +23,7 @@ export async function GET() {
     console.log('Environment debug:', envStatus)
 
     // Test database connection if DATABASE_URL exists
-    let dbTest = { connected: false, error: null }
+    let dbTest: { connected: boolean; error?: string | null; userCount?: number } = { connected: false, error: null }
     if (process.env.DATABASE_URL) {
       try {
         const { prisma } = await import('@/lib/db')
