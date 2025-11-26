@@ -489,69 +489,12 @@ export default function GeneratePage() {
               >
                 {config.resolution}
               </button>
-              {/* Aspect Ratio Buttons */}
-              <div className="flex items-center gap-1">
-                <button
-                  onClick={() => setConfig({ ...config, ratio: '1:1' })}
-                  className={`px-2 py-1.5 text-xs rounded-lg border transition-all ${
-                    config.ratio === '1:1'
-                      ? 'border-purple-500 bg-purple-50 text-purple-600'
-                      : 'border-gray-200 text-gray-600 hover:border-purple-200'
-                  }`}
-                >
-                  <Grid3x3 className="w-3 h-3" />
-                </button>
-                <button
-                  onClick={() => setConfig({ ...config, ratio: '16:9' })}
-                  className={`px-2 py-1.5 text-xs rounded-lg border transition-all ${
-                    config.ratio === '16:9'
-                      ? 'border-purple-500 bg-purple-50 text-purple-600'
-                      : 'border-gray-200 text-gray-600 hover:border-purple-200'
-                  }`}
-                >
-                  <span className="w-3 h-3 border border-current inline-block"></span>
-                </button>
-                <button
-                  onClick={() => setConfig({ ...config, ratio: '9:16' })}
-                  className={`px-2 py-1.5 text-xs rounded-lg border transition-all ${
-                    config.ratio === '9:16'
-                      ? 'border-purple-500 bg-purple-50 text-purple-600'
-                      : 'border-gray-200 text-gray-600 hover:border-purple-200'
-                  }`}
-                >
-                  <span className="w-3 h-3 border border-current inline-block rotate-90"></span>
-                </button>
-                <button
-                  onClick={() => setConfig({ ...config, ratio: '4:3' })}
-                  className={`px-2 py-1.5 text-xs rounded-lg border transition-all ${
-                    config.ratio === '4:3'
-                      ? 'border-purple-500 bg-purple-50 text-purple-600'
-                      : 'border-gray-200 text-gray-600 hover:border-purple-200'
-                  }`}
-                >
-                  <span className="w-3 h-3 border border-current inline-block"></span>
-                </button>
-                <button
-                  onClick={() => setConfig({ ...config, ratio: '3:4' })}
-                  className={`px-2 py-1.5 text-xs rounded-lg border transition-all ${
-                    config.ratio === '3:4'
-                      ? 'border-purple-500 bg-purple-50 text-purple-600'
-                      : 'border-gray-200 text-gray-600 hover:border-purple-200'
-                  }`}
-                >
-                  <span className="w-3 h-3 border border-current inline-block rotate-90"></span>
-                </button>
-                <button
-                  onClick={() => setConfig({ ...config, ratio: '21:9' })}
-                  className={`px-2 py-1.5 text-xs rounded-lg border transition-all ${
-                    config.ratio === '21:9'
-                      ? 'border-purple-500 bg-purple-50 text-purple-600'
-                      : 'border-gray-200 text-gray-600 hover:border-purple-200'
-                  }`}
-                >
-                  <span className="w-4 h-2 border border-current inline-block"></span>
-                </button>
-              </div>
+              <button
+                onClick={() => setShowConfig(true)}
+                className="px-3 py-1.5 border border-gray-200 rounded-xl text-xs md:text-sm text-gray-800 hover:border-purple-300 hover:bg-purple-50 transition-colors"
+              >
+                {config.ratio}
+              </button>
               <button
                 onClick={() => setShowConfig(true)}
                 className="px-3 py-1.5 border border-gray-200 rounded-xl text-xs md:text-sm text-gray-800 hover:border-purple-300 hover:bg-purple-50 transition-colors"
@@ -610,6 +553,26 @@ export default function GeneratePage() {
                         }`}
                       >
                         {res}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Aspect ratio */}
+                <div className="mb-5">
+                  <div className="mb-2 text-xs font-medium text-gray-500">Aspect Ratio (Seedream 4.0)</div>
+                  <div className="grid grid-cols-3 gap-2">
+                    {['1:1', '16:9', '9:16', '4:3', '3:4', '21:9'].map((ratio) => (
+                      <button
+                        key={ratio}
+                        onClick={() => setConfig({ ...config, ratio: ratio as any })}
+                        className={`py-1.5 text-xs rounded-lg border transition-all ${
+                          config.ratio === ratio
+                            ? 'border-purple-500 bg-white text-purple-600 shadow-sm'
+                            : 'border-gray-200 text-gray-600 hover:border-purple-200'
+                        }`}
+                      >
+                        {ratio}
                       </button>
                     ))}
                   </div>
